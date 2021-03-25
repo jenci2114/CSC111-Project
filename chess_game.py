@@ -29,9 +29,9 @@ class ChessGame:
            |    |    |    |    |    |    |    |    |
         3  |----+----+----+----+----+----+----+----|
            |    |    |    |    |    |    |    |    |
-        4  |----+----+----+----+----+----+----+----|
+        4  |----+----+----+----+----+----+----+----|  Black
            |         楚   河         汉   界         |
-        5  |----+----+----+----+----+----+----+----|
+        5  |----+----+----+----+----+----+----+----|  Red
            |    |    |    |    |    |    |    |    |
         6  |----+----+----+----+----+----+----+----|
            |    |    |    |    |    |    |    |    |
@@ -48,8 +48,38 @@ class ChessGame:
             self._board = board
         else:
             self._board = [
-                # 下次再写！
+                # index 0:
+                [_Piece('r', False), _Piece('h', False), _Piece('e', False), _Piece('a', False),
+                 _Piece('k', False), _Piece('a', False), _Piece('e', False), _Piece('h', False),
+                 _Piece('r', False)],
+                # index 1:
+                [None for _ in range(0, 9)],
+                # index 2:
+                [None, _Piece('c', False), None, None, None, None, None, _Piece('c', False), None],
+                # index 3:
+                [_Piece('p', False), None, _Piece('p', False), None, _Piece('p', False), None,
+                 _Piece('p', False), None, _Piece('p', False)],
+                # index 4:
+                [None for _ in range(0, 9)],
+                # index 5:
+                [None for _ in range(0, 9)],
+                # index 6:
+                [_Piece('p', True), None, _Piece('p', True), None, _Piece('p', True), None,
+                 _Piece('p', True), None, _Piece('p', True)],
+                # index 7:
+                [None, _Piece('c', True), None, None, None, None, None, _Piece('c', True), None],
+                # index 8:
+                [None for _ in range(0, 9)],
+                # index 9:
+                [_Piece('r', True), _Piece('h', True), _Piece('e', True), _Piece('a', True),
+                 _Piece('k', True), _Piece('a', True), _Piece('e', True), _Piece('h', True),
+                 _Piece('r', True)],
             ]
+            self._is_red_active = red_active
+            self._move_count = move_count
+            self._valid_moves = []
+
+            self._recalculate_valid_moves  # to be implemented
 
 
 class _Piece:
