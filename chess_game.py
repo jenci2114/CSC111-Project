@@ -82,7 +82,7 @@ class ChessGame:
             self._move_count = move_count
             self._valid_moves = []
 
-            # self._recalculate_valid_moves  # to be implemented
+            # self._recalculate_valid_moves  # TODO: to be implemented
 
     def get_valid_moves(self) -> list[str]:
         """Return a list of the valid moves for the active player."""
@@ -125,15 +125,12 @@ class ChessGame:
         if self._move_count >= _MAX_MOVES:
             return 'Draw'
         elif ...:
-            ...  # Implement later
+            ...  # TODO: implement later
 
     def _calculate_moves_for_board(self, board: list[list[Optional[_Piece]]],
-                                   is_red_active: bool) -> tuple:
-        """Return all posible moves on a given board with a given active player."""
+                                   is_red_active: bool) -> list[str]:
+        """Return all possible moves on a given board with a given active player."""
         moves = []
-        # Used to calculate whether the other players' king is in check
-        # (i.e. the black king if is_red_active, otherwise the red king)
-        check = []
 
         for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:
             piece = board[pos[0]][pos[1]]
@@ -143,96 +140,213 @@ class ChessGame:
             kind, is_red = piece.kind, piece.is_red
 
             if kind == 'r':
-                ...  # implement later
+                moves += ...
 
-    def _find_moves_in_direction(self, board, moves, pos, is_red, direction, limit=None,
-                                 capture=None):
+    def _find_moves_in_direction(self, board: list[list[Optional[_Piece]]],
+                                 pos: tuple[int, int], is_red: bool, direction: tuple[int, int],
+                                 limit: int = None, capture: bool = None):
         """Find valid moves moving in a given direction from a certain position.
 
         capture: True if must capture, False if must not capture, None otherwise.
+
+        >>> g = ChessGame()
+        >>> g._find_moves_in_direction(g._board, (7, 1), True, (-1, 0), capture=False)
+        ['c8+1', 'c8+2', 'c8+3', 'c8+4', 'c8+7']
+        >>> g._find_moves_in_direction(g._board, (0, 0), False, (1, 0), capture=True)
+        ['r1+1', 'r1+2']
+        >>> g._find_moves_in_direction(g._board, (6, 2), True, (-1, 0), capture=True, limit=1)
+        ['p7+1']
         """
-        move_start = ...  # implement later
+        moves = []
 
-    def _wxf_to_index(self, piece: str, is_red: bool) -> tuple[int, int]:
-        """Return the coordinate of a piece (y, x) given the wxf notation for a piece (e.g. 'c6').
+        kind = board[pos[0]][pos[1]].kind
+        stop = False
+        i = 1
+        while not stop:
+            y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
 
-        Raise ValueError if not found.
-        """
-        piece_lower = piece.lower()
-        type = piece_lower[0]
-        location = piece_lower[1]
-        if location in {'+', '-'}:
-            y, x = 0, 0
+            if x < 0 or y < 0 or x > 8 or y > 9:
+                break  # Out of bounds
 
-            # Find the first piece
-            while y <= 9 and self._board[y][x] != _Piece(type, is_red):
-                x += 1
-                if x >= 9:
-                    y += 1
-                    x = 0
+            contents = board[y][x]
+            move = _get_wxf_movement(board, pos, (y, x), is_red)
 
-            if y > 9:
-                raise ValueError
+            if contents is not None:
+                # point contains piece
+                stop = True
+                if kind == 'c':
+                    i += 1
+                    while True:
+                        y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
+                        if x < 0 or y < 0 or x > 8 or y > 9:
+                            break
+                        elif board[y][x] is not None and board[y][x].is_red != is_red:
+                            # Can fire cannon
+                            moves.append(_get_wxf_movement(board, pos, (y, x), is_red))
+                            break
+                        i += 1
 
-            coord1 = (y, x)
-            y += 1
-
-            # Find the second piece (they are in the same column)
-            while y <= 9 and self._board[y][x] != _Piece(type, is_red):
-                y += 1
-
-            if y > 9:
-                raise ValueError
-
-            coord2 = (y, x)  # y is greater than coord1
-
-            if (is_red and location == '+') or (not is_red and location == '-'):
-                return coord1
+                if contents.is_red != is_red and capture is not False:
+                    moves.append(move)
             else:
-                return coord2
-        else:  # location is a number
-            if is_red:
-                x = 9 - int(location)
-            else:  # not is_red
-                x = int(location) - 1
+                # Empty square
+                moves.append(move)
 
-            y = 0
-            # Find the piece in the given column
-            while y <= 9 and self._board[y][x] != _Piece(type, is_red):
+            i += 1
+
+            if limit is not None and i > limit:
+                stop = True
+
+        return moves
+
+    def get_board(self) -> list[list[Optional[_Piece]]]:
+        """Return the board representation."""
+        return self._board
+
+
+def _get_wxf_movement(board: list[list[Optional[_Piece]]],
+                      start: tuple[int, int], end: tuple[int, int], is_red: bool) -> str:
+    """Return the move in wxf notation given the colour, start coordinates, and end coordinates.
+
+    Preconditions:
+        - start represents a piece whose colour is consistent with is_red
+        - the move from start to end is legal
+
+    >>> g = ChessGame()
+    >>> board = g.get_board()
+    >>> _get_wxf_movement(board, (7, 7), (7, 4), True)
+    'c2.5'
+    >>> _get_wxf_movement(board, (2, 7), (2, 5), False)
+    'c8.6'
+    >>> _get_wxf_movement(board, (0, 1), (2, 2), False)
+    'h2+3'
+    >>> _get_wxf_movement(board, (9, 6), (7, 4), True)
+    'e3+5'
+    >>> _get_wxf_movement(board, (9, 0), (7, 0), True)
+    'r9+2'
+    >>> _get_wxf_movement(board, (2, 7), (1, 7), False)
+    'c8-1'
+    """
+    move_start = _index_to_wxf(board, start, is_red)
+    kind = board[start[0]][start[1]].kind
+
+    if start[0] == end[0]:  # Horizontal movement
+        if is_red:
+            return move_start + '.' + str(9 - end[1])
+        else:  # not is_red
+            return move_start + '.' + str(end[1] + 1)
+    elif start[1] == end[1]:  # Vertical movement
+        if (is_red and end[0] < start[0]) or (not is_red and end[0] > start[0]):
+            return move_start + '+' + str(abs(end[0] - start[0]))
+        else:  # (is_red and end[0] > start[0]) or (not is_red and end[0] < start[0])
+            return move_start + '-' + str(abs(end[0] - start[0]))
+    else:  # Movement that changes both x and y coordinates
+        if is_red:
+            move_end = str(9 - end[1])
+        else:  # not is_red
+            move_end = str(end[1] + 1)
+
+        if (is_red and end[0] < start[0]) or (not is_red and end[0] > start[0]):
+            return move_start + '+' + move_end
+        else:  # (is_red and end[0] > start[0]) or (not is_red and end[0] < start[0])
+            return move_start + '-' + move_end
+
+
+def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool) -> tuple[int, int]:
+    """Return the coordinate of a piece (y, x) given the wxf notation for a piece (e.g. 'c6').
+
+    Raise ValueError if not found.
+
+    >>> g = ChessGame()
+    >>> board = g.get_board()
+    >>> _wxf_to_index(board, 'c2', True)
+    (7, 7)
+    >>> _wxf_to_index(board, 'a4', False)
+    (0, 3)
+    """
+    piece_lower = piece.lower()
+    type = piece_lower[0]
+    location = piece_lower[1]
+    if location in {'+', '-'}:
+        y, x = 0, 0
+
+        # Find the first piece
+        while y <= 9 and board[y][x] != _Piece(type, is_red):
+            x += 1
+            if x >= 9:
                 y += 1
+                x = 0
 
-            if y > 9:
-                raise ValueError
-            else:
-                return (y, x)
-
-    def _index_to_wxf(self, pos: tuple[int, int], is_red: bool) -> str:
-        """Return the wxf notation of a piece (e.g. 'c6') given its coordinate (y, x).
-
-        Raise ValueError is there is no piece at the position or the piece has the opposite colour.
-        """
-        piece = self._board[pos[0]][pos[1]]
-        if piece is None or piece.is_red != is_red:
+        if y > 9:
             raise ValueError
 
-        type = piece.kind
-        x = pos[1]
+        coord1 = (y, x)
+        y += 1
 
-        # Search if another piece is present in the column
-        y = 0
-        while y <= 9 and (self._board[y][x] != _Piece(type, is_red) or y == pos[0]):
+        # Find the second piece (they are in the same column)
+        while y <= 9 and board[y][x] != _Piece(type, is_red):
             y += 1
 
         if y > 9:
-            if is_red:
-                return type + str(9 - x)
-            else:  # not is_red
-                return type + str(x + 1)
+            raise ValueError
+
+        coord2 = (y, x)  # y is greater than coord1
+
+        if (is_red and location == '+') or (not is_red and location == '-'):
+            return coord1
         else:
-            if (is_red and pos[0] > y) or (not is_red and pos[0] < y):
-                return type + '-'
-            else:
-                return type + '+'
+            return coord2
+    else:  # location is a number
+        if is_red:
+            x = 9 - int(location)
+        else:  # not is_red
+            x = int(location) - 1
+
+        y = 0
+        # Find the piece in the given column
+        while y <= 9 and board[y][x] != _Piece(type, is_red):
+            y += 1
+
+        if y > 9:
+            raise ValueError
+        else:
+            return (y, x)
+
+
+def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_red: bool) -> str:
+    """Return the wxf notation of a piece (e.g. 'c6') given its coordinate (y, x).
+
+    Raise ValueError is there is no piece at the position or the piece has the opposite colour.
+
+    >>> g = ChessGame()
+    >>> board = g.get_board()
+    >>> _index_to_wxf(board, (9, 6), True)
+    'e3'
+    >>> _index_to_wxf(board, (0, 0), False)
+    'r1'
+    """
+    piece = board[pos[0]][pos[1]]
+    if piece is None or piece.is_red != is_red:
+        raise ValueError
+
+    type = piece.kind
+    x = pos[1]
+
+    # Search if another piece is present in the column
+    y = 0
+    while y <= 9 and (board[y][x] != _Piece(type, is_red) or y == pos[0]):
+        y += 1
+
+    if y > 9:
+        if is_red:
+            return type + str(9 - x)
+        else:  # not is_red
+            return type + str(x + 1)
+    else:
+        if (is_red and pos[0] > y) or (not is_red and pos[0] < y):
+            return type + '-'
+        else:
+            return type + '+'
 
 
 class _Piece:
@@ -264,3 +378,8 @@ class _Piece:
         if other is None:
             return False
         return self.kind == other.kind and self.is_red == other.is_red
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
