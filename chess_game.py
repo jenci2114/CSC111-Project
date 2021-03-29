@@ -152,6 +152,8 @@ class ChessGame:
         >>> g = ChessGame()
         >>> g._find_moves_in_direction(g._board, (7, 1), True, (-1, 0), capture=False)
         ['c8+1', 'c8+2', 'c8+3', 'c8+4', 'c8+7']
+        >>> g._find_moves_in_direction(g._board, (7, 1), True, (0, 1), capture=False)
+        ['c8.7', 'c8.6', 'c8.5', 'c8.4', 'c8.3']
         >>> g._find_moves_in_direction(g._board, (0, 0), False, (1, 0), capture=True)
         ['r1+1', 'r1+2']
         >>> g._find_moves_in_direction(g._board, (6, 2), True, (-1, 0), capture=True, limit=1)
