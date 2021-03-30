@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 from typing import Optional
+import copy
 
 
 _MAX_MOVES = 200
+_INITIAL_POINTS = 100
+_POINTS = {'r': 1, 'h': 2, 'e': 3, 'a': 4, 'k': 5, 'c': 6, 'p': 7}
 
 
 class ChessGame:
@@ -15,19 +18,25 @@ class ChessGame:
     #   - _valid_moves: a list of the valid moves of the current player
     #   - _is_red_active: a boolean representing whether red is the current player
     #   - _move_count: the number of moves that have been made in the current game
+    #   - _red_points: the points of Red
+    #   - _black_points: the points of Black
     _board: list[list[Optional[_Piece]]]
     _valid_moves: list[str]
     _is_red_active: bool
     _move_count: int
+    _red_points: int
+    _black_points: int
 
     def __init__(self, board: list[list[Optional[_Piece]]] = None,
-                 red_active: bool = True, move_count: int = 0) -> None:
+                 red_active: bool = True, move_count: int = 0,
+                 red_points: int = _INITIAL_POINTS,
+                 black_points: int = _INITIAL_POINTS) -> None:
         """The list representing the board is set up like this
         (where the number represents the index):
-        0  |----|----|----|----|----|----|----|----|
-           |    |    |    | \  | /  |    |    |    |
+        0  |---------------------------------------|
+           |    |    |    | \  |  / |    |    |    |
         1  |----+----+----+----+----+----+----+----|
-           |    |    |    | /  | \  |    |    |    |
+           |    |    |    | /  |  \ |    |    |    |
         2  |----+----+----+----+----+----+----+----|
            |    |    |    |    |    |    |    |    |
         3  |----+----+----+----+----+----+----+----|
@@ -39,10 +48,10 @@ class ChessGame:
         6  |----+----+----+----+----+----+----+----|
            |    |    |    |    |    |    |    |    |
         7  |----+----+----+----+----+----+----+----|
-           |    |    |    | \  | /  |    |    |    |
+           |    |    |    | \  |  / |    |    |    |
         8  |----+----+----+----+----+----+----+----|
-           |    |    |    | /  | \  |    |    |    |
-        9  |----|----|----|----|----|----|----|----|
+           |    |    |    | /  |  \ |    |    |    |
+        9  |---------------------------------------|
            0    1    2    3    4    5    6    7    8
 
         Note: the index numbering above is VERY different from what is used for the WXF notation.
@@ -81,6 +90,8 @@ class ChessGame:
             self._is_red_active = red_active
             self._move_count = move_count
             self._valid_moves = []
+            self._red_points = red_points
+            self._black_points = black_points
 
             # self._recalculate_valid_moves  # TODO: to be implemented
 
@@ -89,7 +100,7 @@ class ChessGame:
         return self._valid_moves
 
     def make_move(self, move: str) -> None:
-        """Make the given chess move. This instance of ChessGame will be mutated, and will
+        """Make the given chess move. The instance of ChessGame will be mutated, and will
         afterwards represent the game state after move is made.
 
         If move is not a currently valid move, raise a ValueError.
