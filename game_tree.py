@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 from typing import Optional
+import csv
 
 GAME_START_MOVE = '*'
 
@@ -190,6 +191,31 @@ class GameTree:
             else:
                 self.red_win_probability = sum(subtrees_win_prob) / len(subtrees_win_prob)
         return None
+
+
+def load_game_tree(games_file: str) -> GameTree:
+    """Create a game tree based on games_file.
+
+    Preconditions:
+        - games_file refers to a csv file in the format described on the assignment handout
+
+    Implementation hints:
+        - You can review Tutorial 4 for how we read CSV files in Python.
+
+    >>> tree = load_game_tree('data/small_sample.csv')
+    >>> print(tree)
+    * -> Red's move
+      C2.5 -> Black's move
+        h2+3 -> Red's move
+          H2+3 -> Black's move
+            c8.6 -> Red's move
+              R1.2 -> Black's move
+                h8+7 -> Red's move
+              A6+5 -> Black's move
+                p7+1 -> Red's move
+    <BLANKLINE>
+    """
+    # TODO: to be implemented
 
 
 if __name__ == '__main__':
