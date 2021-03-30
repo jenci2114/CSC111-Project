@@ -135,8 +135,12 @@ class ChessGame:
         """
         if self._move_count >= _MAX_MOVES:
             return 'Draw'
-        elif ...:
-            ...  # TODO: implement later
+        elif all(self._board[y][x] != _Piece('k', True) for y in range(0, 10) for x in range(0, 9)):
+            return 'Black'
+        elif all(self._board[y][x] != _Piece('k', False) for y in range(0, 10) for x in range(0, 9)):
+            return 'Red'
+        else:
+            return None
 
     def _calculate_moves_for_board(self, board: list[list[Optional[_Piece]]],
                                    is_red_active: bool) -> list[str]:
@@ -301,6 +305,14 @@ class ChessGame:
     def get_board(self) -> list[list[Optional[_Piece]]]:
         """Return the board representation."""
         return self._board
+
+    def _board_after_move(self, move: str, is_red: bool) -> list[list[Optional[_Piece]]]:
+        """Return a copy of self._board representing the state of the board after making move.
+        """
+        board_copy = copy.deepcopy(self._board)
+
+        start_pos = _wxf_to_index(self._board, move[0:2], is_red)
+        end_pos = ...  # TODO: Implement the conversion from wxf move to end position
 
 
 def _get_wxf_movement(board: list[list[Optional[_Piece]]],
