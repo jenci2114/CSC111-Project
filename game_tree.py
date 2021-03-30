@@ -215,7 +215,38 @@ def load_game_tree(games_file: str) -> GameTree:
                 p7+1 -> Red's move
     <BLANKLINE>
     """
-    # TODO: to be implemented
+    tree = GameTree()
+    games = {}  # the key is gameID and the value is a list
+
+    with open(games_file) as csv_file:
+        reader = csv.reader(csv_file)
+        next(reader)  # skip the header row
+        for row in reader:
+            # row[0] is gameID, which is unique
+            if row[0] not in games:  # create a new list
+                # row[2] is side and row[3] is move
+                # games[row[0]] is a list and its i-th element is the i-th turn of the game,
+                # which is a list with the first element being red's move, and possibly
+                # the second element being black's move
+                games[row[0]] = [[row[3]]]
+            else:  # row[0] is in games
+                turn = int(row[1])
+                if turn > len(games[row[0]]):  # Need to add a new turn in the list
+                    games[row[0]].append([row[3]])
+                else:  # Need to add black's move to the existing list
+                    games[row[0]][turn - 1].append(row[3])
+
+    for game_id in games:
+        # game is a list consisting of many lists, with each list representing a turn
+        game = games[game_id]
+        sequence_so_far = []  # collect the red-black turn of game
+
+        for turn in game:
+            sequence_so_far += turn
+
+        tree.insert_move_sequence(sequence_so_far)
+
+    return tree
 
 
 if __name__ == '__main__':
