@@ -49,7 +49,7 @@ class ChessGame:
            |    |    |    |    |    |    |    |    |
         7  |----+----+----+----+----+----+----+----|
            |    |    |    | \  |  / |    |    |    |
-        8  |----+----+----+----+----+----+----+----|
+        8  |----+----+----+----+----+----+----+----
            |    |    |    | /  |  \ |    |    |    |
         9  |---------------------------------------|
            0    1    2    3    4    5    6    7    8
@@ -151,40 +151,7 @@ class ChessGame:
             kind, is_red = piece.kind, piece.is_red
 
             if kind == 'r':
-                moves += self._find_moves_in_direction(board, pos, is_red, (1, 0))
-                moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0))
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, 1))
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, -1))
-            elif kind == 'h':
-                # The if-statements are 'horse-leg' condition checks
-                if pos[0] != 0 and board[pos[0] - 1][pos[1]] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-2, 1), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-2, -1), limit=1)
-                if pos[0] != 9 and board[pos[0] + 1][pos[1]] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (2, 1), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (2, -1), limit=1)
-                if pos[1] != 0 and board[pos[0]][pos[1] - 1] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, -2), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, -2), limit=1)
-                if pos[1] != 8 and board[pos[0]][pos[1] + 1] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 2), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 2), limit=1)
-            elif kind == 'e':
-                if pos[0] not in {0, 5}:  # Can move towards black base
-                    # The if-statements are 'elephant-leg' condition checks
-                    if pos[1] != 0 and board[pos[0] - 1][pos[1] - 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-2, -2), limit=1)
-                    if pos[1] != 8 and board[pos[0] - 1][pos[1] + 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-2, 2), limit=1)
-                if pos[0] not in {4, 9}:  # Can move towards red base
-                    if pos[1] != 0 and board[pos[0] + 1][pos[1] - 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (2, -2), limit=1)
-                    if pos[1] != 8 and board[pos[0] + 1][pos[1] + 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (2, 2), limit=1)
-            elif ...:  # TODO: Implement the rest of the pieces
-                ...
-
-        return moves
+                moves += ...
 
     def _find_moves_in_direction(self, board: list[list[Optional[_Piece]]],
                                  pos: tuple[int, int], is_red: bool, direction: tuple[int, int],
@@ -423,6 +390,8 @@ class _Piece:
         if other is None:
             return False
         return self.kind == other.kind and self.is_red == other.is_red
+
+
 
 
 if __name__ == '__main__':

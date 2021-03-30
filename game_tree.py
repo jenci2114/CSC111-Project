@@ -1,8 +1,9 @@
-"""..."""
+"""Game Tree"""
 
 
 from __future__ import annotations
 from typing import Optional
+import csv
 
 GAME_START_MOVE = '*'
 
@@ -181,6 +182,7 @@ class GameTree:
         Note: This definition is from the perspective of Red, which should be changed after
         discussion.
         """
+        # TODO: Change the algorithm so that it is fair for both sides
         if self._subtrees == []:
             return None
         else:
@@ -190,6 +192,68 @@ class GameTree:
             else:
                 self.red_win_probability = sum(subtrees_win_prob) / len(subtrees_win_prob)
         return None
+
+
+def load_game_tree(games_file: str) -> GameTree:
+    """Create a game tree based on games_file.
+
+    A small smaple of games_file:
+    gameID,turn,side,move
+    57380690,1,red,C2.5
+    57380690,2,red,H2+3
+    57380690,3,red,R1.2
+    57380690,1,black,h2+3
+    57380690,2,black,c8.6
+    57380690,3,black,h8+7
+
+    Preconditions:
+        - games_file refers to a csv file in the same format as the small sample.
+
+    >>> tree = load_game_tree('data/small_sample.csv')
+    >>> print(tree)
+    * -> Red's move
+      C2.5 -> Black's move
+        h2+3 -> Red's move
+          H2+3 -> Black's move
+            c8.6 -> Red's move
+              R1.2 -> Black's move
+                h8+7 -> Red's move
+              A6+5 -> Black's move
+                p7+1 -> Red's move
+    <BLANKLINE>
+    """
+    tree = GameTree()
+    games = {}  # the key is gameID and the value is a list
+
+    with open(games_file) as csv_file:
+        reader = csv.reader(csv_file)
+        next(reader)  # skip the header row
+        for row in reader:
+            # row[0] is gameID, which is unique
+            if row[0] not in games:  # create a new list
+                # row[2] is side and row[3] is move
+                # games[row[0]] is a list and its i-th element is the i-th turn of the game,
+                # which is a list with the first element being red's move, and possibly
+                # the second element being black's move
+                games[row[0]] = [[row[3]]]
+            else:  # row[0] is in games
+                turn = int(row[1])
+                if turn > len(games[row[0]]):  # Need to add a new turn in the list
+                    games[row[0]].append([row[3]])
+                else:  # Need to add black's move to the existing list
+                    games[row[0]][turn - 1].append(row[3])
+
+    for game_id in games:
+        # game is a list consisting of many lists, with each list representing a turn
+        game = games[game_id]
+        sequence_so_far = []  # collect the red-black turn of game
+
+        for turn in game:
+            sequence_so_far += turn
+
+        tree.insert_move_sequence(sequence_so_far)
+
+    return tree
 
 
 if __name__ == '__main__':
