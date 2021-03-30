@@ -181,8 +181,62 @@ class ChessGame:
                         moves += self._find_moves_in_direction(board, pos, is_red, (2, -2), limit=1)
                     if pos[1] != 8 and board[pos[0] + 1][pos[1] + 1] is None:
                         moves += self._find_moves_in_direction(board, pos, is_red, (2, 2), limit=1)
-            elif ...:  # TODO: Implement the rest of the pieces
-                ...
+            elif kind == 'a':
+                # Movement restricted in palace
+                if pos[0] not in {2, 9}:
+                    if pos[1] != 3:
+                        moves += self._find_moves_in_direction(board, pos, is_red, (1, -1), limit=1)
+                    if pos[1] != 5:
+                        moves += self._find_moves_in_direction(board, pos, is_red, (1, 1), limit=1)
+                if pos[0] not in {0, 7}:
+                    if pos[1] != 3:
+                        moves += self._find_moves_in_direction(board, pos, is_red, (-1, -1), limit=1)
+                    if pos[1] != 5:
+                        moves += self._find_moves_in_direction(board, pos, is_red, (-1, 1), limit=1)
+            elif kind == 'k':
+                # Movement restricted in palace
+                if pos[0] not in {2, 9}:
+                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), limit=1)
+                if pos[0] not in {0, 7}:
+                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), limit=1)
+                if pos[1] != 3:
+                    moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
+                if pos[1] != 5:
+                    moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
+                # Confront
+                if is_red:
+                    king_row = pos[0] - 1
+                    while king_row >= 0:
+                        if board[king_row][pos[1]] is not None:
+                            if board[king_row][pos[1]].kind == 'k':
+                                moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]), is_red))
+                            break
+                        king_row -= 1
+                else:  # not is_red
+                    king_row = pos[0] + 1
+                    while king_row <= 9:
+                        if board[king_row][pos[1]] is not None:
+                            if board[king_row][pos[1]].kind == 'k':
+                                moves.append(
+                                    _get_wxf_movement(board, pos, (king_row, pos[1]), is_red))
+                            break
+                        king_row += 1
+            elif kind == 'c':
+                moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), capture=False)
+                moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), capture=False)
+                moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), capture=False)
+                moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), capture=False)
+            else:  # kind == 'p'
+                if is_red:
+                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), limit=1)
+                    if pos[0] <= 4:  # Crossed the river
+                        moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
+                        moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
+                else:  # not is_red
+                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), limit=1)
+                    if pos[0] >= 5:  # Crossed the river
+                        moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
+                        moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
 
         return moves
 
@@ -423,8 +477,6 @@ class _Piece:
         if other is None:
             return False
         return self.kind == other.kind and self.is_red == other.is_red
-
-
 
 
 if __name__ == '__main__':
