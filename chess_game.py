@@ -312,7 +312,76 @@ class ChessGame:
         board_copy = copy.deepcopy(self._board)
 
         start_pos = _wxf_to_index(self._board, move[0:2], is_red)
-        end_pos = ...  # TODO: Implement the conversion from wxf move to end position
+        end_pos = _get_index_movement(self._board, move, is_red)
+
+        board_copy[end_pos[0]][end_pos[1]] = board_copy[start_pos[0]][start_pos[1]]
+        board_copy[start_pos[0]][start_pos[1]] = None
+
+        return board_copy
+
+
+def _get_index_movement(board: list[list[Optional[_Piece]]],
+                        move: str, is_red: bool) -> tuple[int, int]:
+    """Return the end position of a move, given the move in wxf notation and the colour.
+
+    Preconditions:
+        - The move given in wxf notation is legal
+
+    >>> g = ChessGame()
+    >>> board = g.get_board()
+    >>> _get_index_movement(board, 'c2.5', True)
+    (7, 4)
+    >>> _get_index_movement(board, 'c8.6', False)
+    (2, 5)
+    >>> _get_index_movement(board, 'h2+3', False)
+    (2, 2)
+    >>> _get_index_movement(board, 'e3+5', True)
+    (7, 4)
+    >>> _get_index_movement(board, 'r9+2', True)
+    (7, 0)
+    >>> _get_index_movement(board, 'c8-1', False)
+    (1, 7)
+    """
+    y, x = _wxf_to_index(board, move[0:2], is_red)
+    sign = move[2]
+    value = int(move[3])
+    piece = board[y][x]
+    if sign == '.' and is_red:
+        return (y, 9 - value)
+    elif sign == '.' and not is_red:
+        return (y, value - 1)
+    elif piece.kind in {'r', 'k', 'c', 'p'}:  # they all move vertically
+        if is_red and sign == '+' or not is_red and sign == '-':
+            return (y - value, x)
+        else:  # black and -, or red and +
+            return (y + value, x)
+    elif piece.kind == 'h' and is_red:
+        vert = 3 - abs(x - (9 - value))  # Vertical steps = 3 - horizontal steps
+        if sign == '+':
+            return (y - vert, 9 - value)
+        else:  # sign == '-'
+            return (y + vert, 9 - value)
+    elif piece.kind == 'h' and not is_red:
+        vert = 3 - abs(x - (value - 1))
+        if sign == '+':
+            return (y + vert, value - 1)
+        else:  # sign == '-'
+            return (y - vert, value - 1)
+    else:  # piece.kind in {'e', 'a'}  elephant and assistant both move in perfect diagonal lines
+        # Determine the vertical steps
+        if piece.kind == 'e':
+            vert = 2
+        else:  # piece.kind == 'a'
+            vert = 1
+
+        if sign == '+' and is_red:
+            return (y - vert, 9 - value)
+        elif sign == '-' and is_red:
+            return (y + vert, 9 - value)
+        elif sign == '+' and not is_red:
+            return (y + vert, value - 1)
+        else:  # sign == '-' and not is_red
+            return (y - vert, value - 1)
 
 
 def _get_wxf_movement(board: list[list[Optional[_Piece]]],
