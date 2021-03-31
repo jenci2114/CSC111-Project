@@ -320,7 +320,7 @@ class ChessGame:
         return board_copy
 
     def _recalculate_valid_moves(self) -> None:
-        """Update the valid moves for this game baord."""
+        """Update the valid moves for this game board."""
         self._valid_moves = self._calculate_moves_for_board(self._board, self._is_red_active)
 
 
@@ -420,7 +420,6 @@ def _get_wxf_movement(board: list[list[Optional[_Piece]]],
     'c8-1'
     """
     move_start = _index_to_wxf(board, start, is_red)
-    kind = board[start[0]][start[1]].kind
 
     if start[0] == end[0]:  # Horizontal movement
         if is_red:
