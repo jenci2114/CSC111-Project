@@ -33,26 +33,26 @@ class ChessGame:
                  black_points: int = _INITIAL_POINTS) -> None:
         """The list representing the board is set up like this
         (where the number represents the index):
-        0  |---------------------------------------|
-           |    |    |    | \  |  / |    |    |    |
-        1  |----+----+----+----+----+----+----+----|
-           |    |    |    | /  |  \ |    |    |    |
-        2  |----+----+----+----+----+----+----+----|
-           |    |    |    |    |    |    |    |    |
-        3  |----+----+----+----+----+----+----+----|
-           |    |    |    |    |    |    |    |    |
-        4  |----+----+----+----+----+----+----+----|  Black
-           |         楚   河         汉   界         |
-        5  |----+----+----+----+----+----+----+----|  Red
-           |    |    |    |    |    |    |    |    |
-        6  |----+----+----+----+----+----+----+----|
-           |    |    |    |    |    |    |    |    |
-        7  |----+----+----+----+----+----+----+----|
-           |    |    |    | \  |  / |    |    |    |
-        8  |----+----+----+----+----+----+----+----|
-           |    |    |    | /  |  \ |    |    |    |
-        9  |---------------------------------------|
-           0    1    2    3    4    5    6    7    8
+        0  丨----一----一----一----一----一----一----一----丨
+           丨    丨    丨    丨 \  丨  / 丨    丨    丨    丨
+        1  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨 /  丨  \ 丨    丨    丨    丨
+        2  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨    丨    丨    丨    丨    丨
+        3  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨    丨    丨    丨    丨    丨
+        4  丨----十----十----十----十----十----十----十----丨 Black
+           丨    一    楚    河    一    汉    界    一    丨
+        5  丨----十----十----十----十----十----十----十----丨  Red
+           丨    丨    丨    丨    丨    丨    丨    丨    丨
+        6  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨    丨    丨    丨    丨    丨
+        7  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨 \  丨  / 丨    丨    丨    丨
+        8  丨----十----十----十----十----十----十----十----丨
+           丨    丨    丨    丨 /  丨  \ 丨    丨    丨    丨
+        9  丨----一----一----一----一----一----一----一----丨
+           〇    一    二    三    四    五    六    七    八
 
         Note: the index numbering above is VERY different from what is used for the WXF notation.
         """
@@ -93,7 +93,7 @@ class ChessGame:
             self._red_points = red_points
             self._black_points = black_points
 
-            # self._recalculate_valid_moves  # TODO: to be implemented
+            self._recalculate_valid_moves()
 
     def get_valid_moves(self) -> list[str]:
         """Return a list of the valid moves for the active player."""
@@ -108,7 +108,7 @@ class ChessGame:
         if move not in self._valid_moves:
             raise ValueError(f'Move "{move}" is not valid')
 
-        self._board = self._board_after_move(move)
+        self._board = self._board_after_move(move, self._is_red_active)
 
         self._is_red_active = not self._is_red_active
         self._move_count += 1
@@ -120,7 +120,7 @@ class ChessGame:
 
         If move is not a currently valid move, raise a ValueError.
         """
-        return ChessGame(board=self._board_after_move(move),
+        return ChessGame(board=self._board_after_move(move, self._is_red_active),
                          red_active=not self._is_red_active,
                          move_count=self._move_count + 1)
 
@@ -318,6 +318,18 @@ class ChessGame:
         board_copy[start_pos[0]][start_pos[1]] = None
 
         return board_copy
+
+    def _recalculate_valid_moves(self) -> None:
+        """Update the valid moves for this game baord."""
+        self._valid_moves = self._calculate_moves_for_board(self._board, self._is_red_active)
+
+
+def print_board(board: list[list[Optional[_Piece]]]):
+    """Returns the string representation of the given board.
+
+    The board should look similar to what was drawn in the docstring for ChessGame.__init__.
+    """
+    # TODO: Leave this one to me.  --Jenci
 
 
 def _get_index_movement(board: list[list[Optional[_Piece]]],
