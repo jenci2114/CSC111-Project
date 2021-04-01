@@ -9,6 +9,18 @@ _MAX_MOVES = 200
 _INITIAL_POINTS = 100
 _POINTS = {'r': 1, 'h': 2, 'e': 3, 'a': 4, 'k': 5, 'c': 6, 'p': 7}
 
+# For printing colours
+RED = '\033[91m'
+BLACK = '\33[0m'
+
+PIECES = {('r', True): RED + '车' + BLACK, ('r', False): '车',
+          ('h', True): RED + '马' + BLACK, ('h', False): '马',
+          ('e', True): RED + '相' + BLACK, ('e', False): '象',
+          ('a', True): RED + '仕' + BLACK, ('a', False): '士',
+          ('k', True): RED + '帅' + BLACK, ('k', False): '将',
+          ('c', True): RED + '炮' + BLACK, ('c', False): '砲',
+          ('p', True): RED + '兵' + BLACK, ('p', False): '卒'}
+
 
 class ChessGame:
     """A class representing a state of a game of Chinese Chess.
@@ -94,6 +106,26 @@ class ChessGame:
             self._black_points = black_points
 
             self._recalculate_valid_moves()
+
+    def __str__(self) -> str:
+        """Return the string representation of the board, who is active, and valid moves.
+
+        If the game is finished, return the string representation of the board and who wins.
+        """
+        print_board(self._board)
+        winner = self.get_winner()
+
+        if winner is None:
+            turn_message = ''
+            if self._is_red_active:
+                turn_message += "Red's turn.\n"
+            else:
+                turn_message += "Black's turn.\n"
+            return turn_message + f'Valid moves: {self._valid_moves}'
+        elif winner == 'Draw':
+            return 'Draw!'
+        else:  # Red wins or black wins
+            return f'{winner} wins!'
 
     def get_valid_moves(self) -> list[str]:
         """Return a list of the valid moves for the active player."""
@@ -324,12 +356,58 @@ class ChessGame:
         self._valid_moves = self._calculate_moves_for_board(self._board, self._is_red_active)
 
 
-def print_board(board: list[list[Optional[_Piece]]]):
-    """Returns the string representation of the given board.
+def print_board(board: list[list[Optional[_Piece]]]) -> None:
+    """Print the string representation of the given board.
 
     The board should look similar to what was drawn in the docstring for ChessGame.__init__.
     """
-    # TODO: Leave this one to me.  --Jenci
+    row_normal = '丨    丨    丨    丨    丨    丨    丨    丨    丨'
+    row_down = '丨    丨    丨    丨 \  丨  / 丨    丨    丨    丨'
+    row_up = '丨    丨    丨    丨 /  丨  \ 丨    丨    丨    丨'
+    print('一    二    三    四    五    六    七    八    九   (Black)\n'
+          f'{_print_row(board, 0)}\n'
+          f'{row_down}\n'
+          f'{_print_row(board, 1)}\n'
+          f'{row_up}\n'
+          f'{_print_row(board, 2)}\n'
+          f'{row_normal}\n'
+          f'{_print_row(board, 3)}\n'
+          f'{row_normal}\n'
+          f'{_print_row(board, 4)}\n'
+          '丨    一    楚    河    一    汉    界    一    丨\n'
+          f'{_print_row(board, 5)}\n'
+          f'{row_normal}\n'
+          f'{_print_row(board, 6)}\n'
+          f'{row_normal}\n'
+          f'{_print_row(board, 7)}\n'
+          f'{row_down}\n'
+          f'{_print_row(board, 8)}\n'
+          f'{row_up}\n'
+          f'{_print_row(board, 9)}\n'
+          '九    八    七    六    五    四    三    二    一    (Red)\n')
+
+
+def _print_row(board: list[list[Optional[_Piece]]], row: int) -> str:
+    """Returns the row representation at a given row of the board."""
+    str_so_far = ''
+    for i in range(0, 8):
+        str_so_far += f'{_print_piece(board, row, i)}----'
+    str_so_far += f'{_print_piece(board, row, 8)}'
+    return str_so_far
+
+
+def _print_piece(board: list[list[Optional[_Piece]]], y: int, x: int) -> str:
+    """Returns the piece representation at the given coordinate of the board."""
+    piece = board[y][x]
+    try:
+        return PIECES[(piece.kind, piece.is_red)]
+    except AttributeError:
+        if x in {0, 8}:
+            return '丨'
+        elif y in {0, 9}:
+            return '一'
+        else:
+            return '十'
 
 
 def _get_index_movement(board: list[list[Optional[_Piece]]],
