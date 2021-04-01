@@ -99,7 +99,7 @@ class GameTree:
             return s
 
     def insert_move_sequence(self, moves: list[str],
-                             white_win_probability: float = 0.0) -> None:
+                             red_win_probability: float = 0.0) -> None:
         """Insert the given sequence of moves into this tree.
 
         The inserted moves form a chain of descendants, where:
@@ -135,7 +135,7 @@ class GameTree:
                   z -> Black's move
         <BLANKLINE>
         """
-        self.insert_move_index(0, moves, white_win_probability)
+        self.insert_move_index(0, moves, red_win_probability)
 
     def insert_move_index(self, curr_index: int, moves: list[str],
                           red_win_probability: float) -> None:
