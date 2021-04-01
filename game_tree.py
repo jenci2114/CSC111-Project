@@ -169,15 +169,7 @@ class GameTree:
         return None
 
     def _update_red_win_probability(self) -> None:
-        """Recalculate the white win probability of this tree.
-
-        Use the following definition for the white win probability of self:
-            - if self is a leaf, don't change the white win probability
-              (leave the current value alone)
-            - if self is not a leaf and self.is_red_move is True, the red win probability
-              is equal to the MAXIMUM of the red win probabilities of its subtrees
-            - if self is not a leaf and self.is_red_move is False, the red win probability
-              is equal to the AVERAGE of the red win probabilities of its subtrees
+        """Recalculate the red win probability of this tree.
 
         Note: This definition is from the perspective of Red, which should be changed after
         discussion.
@@ -192,6 +184,13 @@ class GameTree:
             else:
                 self.red_win_probability = sum(subtrees_win_prob) / len(subtrees_win_prob)
         return None
+
+    def _calculate_relative_points(self) -> None:
+        """Calculate the relative points.
+
+        We need to go back to all the ancestors to see the change of pieces.
+        """
+        # TODO: implement this method
 
 
 def load_game_tree(games_file: str) -> GameTree:
