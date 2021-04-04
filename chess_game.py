@@ -536,13 +536,13 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
     (0, 3)
     """
     piece_lower = piece.lower()
-    type = piece_lower[0]
+    piece_type = piece_lower[0]
     location = piece_lower[1]
     if location in {'+', '-'}:
         y, x = 0, 0
 
         # Find the first piece
-        while y <= 9 and board[y][x] != _Piece(type, is_red):
+        while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
             x += 1
             if x >= 9:
                 y += 1
@@ -555,7 +555,7 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
         y += 1
 
         # Find the second piece (they are in the same column)
-        while y <= 9 and board[y][x] != _Piece(type, is_red):
+        while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
             y += 1
 
         if y > 9:
@@ -575,7 +575,7 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
 
         y = 0
         # Find the piece in the given column
-        while y <= 9 and board[y][x] != _Piece(type, is_red):
+        while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
             y += 1
 
         if y > 9:
