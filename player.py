@@ -7,7 +7,7 @@ from game_tree import GameTree, load_game_tree
 
 
 class Player:
-    """An abstract class representing a Minichess AI.
+    """An abstract class representing a Chinese Chess AI.
 
     This class can be subclassed to implement different strategies for playing chess.
     """
@@ -80,19 +80,10 @@ class RandomTreePlayer(Player):
         >>>
         """
         if self._game_tree is not None and previous_move is not None:
-            found = 0
-
-            for subtree in self._game_tree.get_subtrees():
-                if subtree.move == previous_move:
-                    self._game_tree = subtree
-                    found = 1  # subtree is found
-                    break
-
-            if found == 0:  # no subtree is found
-                self._game_tree = None
+            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no choice for move so we make a random move
+            # no branches available so we search for possible moves and make a random move
             possible_moves = game.get_valid_moves()
             self._game_tree = None
             return random.choice(possible_moves)
@@ -137,33 +128,24 @@ class GreedyTreePlayer(Player):
             - There is at least one valid move for the given game
         """
         if self._game_tree is not None and previous_move is not None:
-            found = 0
-
-            for subtree in self._game_tree.get_subtrees():
-                if subtree.move == previous_move:
-                    self._game_tree = subtree
-                    found = 1  # subtree is found
-                    break
-
-            if found == 0:  # no subtree is found
-                self._game_tree = None
+            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no choice for move so we make a random move
+            # no branches available so we make a random move
             possible_moves = game.get_valid_moves()
             self._game_tree = None
             return random.choice(possible_moves)
         else:
             subtrees = self._game_tree.get_subtrees()
-            white_win = [sub.red_win_probability for sub in subtrees]
+            red_win = [sub.red_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
-                maximum = max(white_win)
-                maximum_index = white_win.index(maximum)
+                maximum = max(red_win)
+                maximum_index = red_win.index(maximum)
                 max_subtree = subtrees[maximum_index]
                 self._game_tree = max_subtree
             else:  # if playing as black
-                minimum = min(white_win)
-                minimum_index = white_win.index(minimum)
+                minimum = min(red_win)
+                minimum_index = red_win.index(minimum)
                 min_subtree = subtrees[minimum_index]
                 self._game_tree = min_subtree
 
@@ -243,14 +225,14 @@ class LearningPlayer(Player):
 
 
 if __name__ == '__main__':
-    import python_ta.contracts
-    python_ta.contracts.check_all_contracts()
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
 
     import doctest
     doctest.testmod()
 
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 100,
-        'disable': ['E1136'],
-    })
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1136'],
+    # })

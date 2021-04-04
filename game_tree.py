@@ -108,12 +108,6 @@ class GameTree:
             - moves[2] is a child of moves[1]
             - etc.
 
-        Do not create duplicate moves that share the same parent; for example, if moves[0] is
-        already a child of this tree's root, you should recurse into that existing subtree rather
-        than create a new subtree with moves[0].
-        But if moves[0] is not a child of this tree's root, create a new subtree for it
-        and append it to the existing list of subtrees.
-
         >>> gt = GameTree()
         >>> gt.insert_move_sequence(['a', 'b', 'c', 'd'])
         >>> print(gt)
@@ -141,7 +135,7 @@ class GameTree:
                           red_win_probability: float) -> None:
         """A help method for insert_move_sequence."""
         if curr_index == len(moves):
-            return None
+            return
         else:
             curr_move = moves[curr_index]
             for subtree in self._subtrees:
@@ -149,7 +143,7 @@ class GameTree:
                     subtree.insert_move_index(curr_index + 1, moves, red_win_probability)
                     self._update_red_win_probability()
                     # an early return
-                    return None
+                    return
 
             # there is no early return after the for loop,
             # which means we need to create a new subtree
@@ -166,7 +160,7 @@ class GameTree:
             # recurse for the next move in moves
             self._subtrees[-1].insert_move_index(curr_index + 1, moves, red_win_probability)
 
-        return None
+        return
 
     def _update_red_win_probability(self) -> None:
         """Recalculate the red win probability of this tree.
@@ -256,14 +250,14 @@ def load_game_tree(games_file: str) -> GameTree:
 
 
 if __name__ == '__main__':
-    import python_ta.contracts
-    python_ta.contracts.check_all_contracts()
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
 
     import doctest
     doctest.testmod()
 
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 100,
-        'disable': ['E1136'],
-    })
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1136'],
+    # })
