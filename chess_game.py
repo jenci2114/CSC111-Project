@@ -18,7 +18,7 @@ PIECES = {('r', True): RED + '车' + BLACK, ('r', False): '车',
           ('e', True): RED + '相' + BLACK, ('e', False): '象',
           ('a', True): RED + '仕' + BLACK, ('a', False): '士',
           ('k', True): RED + '帅' + BLACK, ('k', False): '将',
-          ('c', True): RED + '炮' + BLACK, ('c', False): '砲',
+          ('c', True): RED + '炮' + BLACK, ('c', False): '炮',
           ('p', True): RED + '兵' + BLACK, ('p', False): '卒'}
 
 
