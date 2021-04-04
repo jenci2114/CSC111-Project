@@ -225,6 +225,10 @@ class LearningPlayer(Player):
 
 
 if __name__ == '__main__':
+    # To avoid RecursionError
+    import sys
+    sys.setrecursionlimit(10000)
+
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
 

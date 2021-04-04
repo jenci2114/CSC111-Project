@@ -137,10 +137,12 @@ class ChessGame:
 
         If move is not a currently valid move, raise a ValueError.
         """
-        if move not in self._valid_moves:
+        move_lowered = move.lower()
+
+        if move_lowered not in self._valid_moves:
             raise ValueError(f'Move "{move}" is not valid')
 
-        self._board = self._board_after_move(move, self._is_red_active)
+        self._board = self._board_after_move(move_lowered, self._is_red_active)
 
         self._is_red_active = not self._is_red_active
         self._move_count += 1
