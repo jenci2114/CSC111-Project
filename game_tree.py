@@ -257,9 +257,9 @@ def tree_to_xml(tree: GameTree, filename: str) -> None:
         - filename has suffix .xml
     """
     root = ET.Element('GameTree')
-    root_move = ET.SubElement(root, 'move', move=str(tree.move), is_red_move=str(tree.is_red_move),
-                              relative_points=str(tree.relative_points),
-                              red_win_probability=str(tree.red_win_probability))
+    root_move = ET.SubElement(root, 'm', m=str(tree.move), i=str(tree.is_red_move),
+                              rel=str(tree.relative_points),
+                              r=str(tree.red_win_probability))
     _build_e_tree(root_move, tree)
 
     xml_tree = ET.ElementTree(root)
@@ -271,12 +271,12 @@ def _build_e_tree(root_move: ET.Element, tree: GameTree) -> None:
 
     This function mutates its input Element.
     """
-    subtrees = ET.SubElement(root_move, 'subtrees')
+    subtrees = ET.SubElement(root_move, 'sub')
     for subtree in tree.get_subtrees():
-        move = ET.SubElement(subtrees, 'move', move=str(subtree.move),
-                             is_red_move=str(subtree.is_red_move),
-                             relative_points=str(subtree.relative_points),
-                             red_win_probability=str(subtree.red_win_probability))
+        move = ET.SubElement(subtrees, 'm', m=str(subtree.move),
+                             i=str(subtree.is_red_move),
+                             rel=str(subtree.relative_points),
+                             r=str(subtree.red_win_probability))
         _build_e_tree(move, subtree)
 
 
@@ -300,10 +300,10 @@ def _build_game_tree(move: ET.Element, tree: GameTree) -> None:
 
     This function mutates its input tree.
     """
-    tree.move = move.attrib['move']
-    tree.is_red_move = move.attrib['is_red_move'] == 'True'
-    tree.relative_points = int(move.attrib['relative_points'])
-    tree.red_win_probability = float(move.attrib['red_win_probability'])
+    tree.move = move.attrib['m']
+    tree.is_red_move = move.attrib['i'] == 'True'
+    tree.relative_points = int(move.attrib['rel'])
+    tree.red_win_probability = float(move.attrib['r'])
     for child_move in move[0]:
         subtree = GameTree()
         _build_game_tree(child_move, subtree)
