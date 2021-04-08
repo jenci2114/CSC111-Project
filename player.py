@@ -3,7 +3,7 @@
 from typing import Optional
 import random
 from chess_game import ChessGame
-from game_tree import GameTree, load_game_tree
+from game_tree import GameTree, load_game_tree, xml_to_tree
 
 
 class Player:
@@ -11,6 +11,13 @@ class Player:
 
     This class can be subclassed to implement different strategies for playing chess.
     """
+    # Private Instance Attributes:
+    #   - _game_tree:
+    #       The GameTree that this player uses to make its moves. If None, then this
+    #       player just makes random moves.
+    #   - _xml_file: the xml file that stores the game tree
+    _game_tree: Optional[GameTree]
+    _xml_file: str
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -21,6 +28,10 @@ class Player:
         Preconditions:
             - There is at least one valid move for the given game
         """
+        raise NotImplementedError
+
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
         raise NotImplementedError
 
 
@@ -39,6 +50,10 @@ class RandomPlayer(Player):
         possible_moves = game.get_valid_moves()
         return random.choice(possible_moves)
 
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        return  # Does nothing
+
 
 class RandomTreePlayer(Player):
     """A Chinese Chess player that plays randomly based on a given GameTree.
@@ -53,19 +68,15 @@ class RandomTreePlayer(Player):
            But if its game tree is None or has no subtrees, the player picks its next move randomly,
            and then sets its game tree to None.
     """
-    # Private Instance Attributes:
-    #   - _game_tree:
-    #       The GameTree that this player uses to make its moves. If None, then this
-    #       player just makes random moves.
-    _game_tree: Optional[GameTree]
 
-    def __init__(self, game_tree: GameTree) -> None:
+    def __init__(self, xml_file: str = '') -> None:
         """Initialize this player.
 
         Preconditions:
-            - game_tree represents a game tree at the initial state (root is '*')
+            - xml file contains a game tree at the initial state (root is '*')
         """
-        self._game_tree = game_tree
+        self._xml_file = xml_file
+        self.reload_tree()
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -92,6 +103,13 @@ class RandomTreePlayer(Player):
             self._game_tree = random.choice(subtrees)
             return self._game_tree.move
 
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        try:
+            self._game_tree = xml_to_tree(self._xml_file)
+        except FileNotFoundError:
+            self._game_tree = None
+
 
 class GreedyTreePlayer(Player):
     """A Chinese Chess player that chooses a move based on the database,
@@ -102,21 +120,16 @@ class GreedyTreePlayer(Player):
 
     If the player is black, then it will choose a move that has lowest winning
     probability for red.
-
     """
-    # Private Instance Attributes:
-    #   - _game_tree:
-    #       The GameTree that this player uses to make its moves. If None, then this
-    #       player just makes random moves.
-    _game_tree: Optional[GameTree]
 
-    def __init__(self, game_tree: GameTree) -> None:
+    def __init__(self, xml_file: str) -> None:
         """Initialize this player.
 
         Preconditions:
-            - game_tree represents a game tree at the initial state (root is '*')
+            - xml file contains a game tree at the initial state (root is '*')
         """
-        self._game_tree = game_tree
+        self._xml_file = xml_file
+        self.reload_tree()
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -151,6 +164,13 @@ class GreedyTreePlayer(Player):
 
             return self._game_tree.move
 
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        try:
+            self._game_tree = xml_to_tree(self._xml_file)
+        except FileNotFoundError:
+            self._game_tree = None
+
 
 class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
@@ -170,6 +190,7 @@ class ExploringPlayer(Player):
         Preconditions:
             - depth >= 1
         """
+        self._game_tree = GameTree()
         self._depth = depth
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
@@ -182,6 +203,10 @@ class ExploringPlayer(Player):
             - There is at least one valid move for the given game
         """
         # TODO: implement the method
+
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        self._game_tree = GameTree()
 
 
 class LearningPlayer(Player):
@@ -197,20 +222,18 @@ class LearningPlayer(Player):
     """
     # Private Instance Attributes:
     #   - _depth: the number of turns the player will explore
-    #   - _game_tree:
-    #       The GameTree that this player uses to make its moves. If None, then this
-    #       player just makes random moves.
     _depth: int
-    _game_tree: GameTree
 
-    def __init__(self, depth: int, game_tree: GameTree) -> None:
+    def __init__(self, depth: int, xml_file: str) -> None:
         """Initialize this player.
 
         Preconditions:
             - depth >= 1
-            - game_tree represents a game tree at the initial state (root is '*')
+            - xml file contains a game tree at the initial state (root is '*')
         """
         self._depth = depth
+        self._xml_file = xml_file
+        self.reload_tree()
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -222,6 +245,13 @@ class LearningPlayer(Player):
             - There is at least one valid move for the given game
         """
         # TODO: implement the method
+
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        try:
+            self._game_tree = xml_to_tree(self._xml_file)
+        except FileNotFoundError:
+            self._game_tree = GameTree()
 
 
 if __name__ == '__main__':

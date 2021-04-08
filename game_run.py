@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from chess_game import ChessGame
-from player import Player
+from player import Player, RandomTreePlayer, GreedyTreePlayer, LearningPlayer
 
 import copy
 
@@ -17,11 +17,11 @@ def run_games(n: int, red: Player, black: Player, visualize: bool = False) -> No
     """
     stats = {'Red': 0, 'Black': 0, 'Draw': 0}
     results = []
-    for i in range(0, n):
-        red_copy = copy.deepcopy(red)
-        black_copy = copy.deepcopy(black)
+    for i in range(1, n + 1):
+        red.reload_tree()
+        black.reload_tree()
 
-        winner, _ = run_game(red_copy, black_copy, visualize)
+        winner, _ = run_game(red, black, visualize)
         stats[winner] += 1
         results.append(winner)
 

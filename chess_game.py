@@ -531,27 +531,29 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
     if location in {'+', '-'}:
         y, x = 0, 0
 
-        # Find the first piece
-        while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
+        locations_so_far = []
+        # Search the board
+        while y <= 9:
+            if board[y][x] == _Piece(piece_type, is_red):
+                locations_so_far.append((y, x))
             x += 1
             if x >= 9:
                 y += 1
                 x = 0
 
-        if y > 9:
+        coord1, coord2 = (), ()
+        out = False
+        for first_piece in locations_so_far:
+            for second_piece in locations_so_far:
+                if first_piece != second_piece and first_piece[1] == second_piece[1]:
+                    coord1, coord2 = sorted((first_piece, second_piece))
+                    out = True
+                    break
+            if out:
+                break
+
+        if coord1 == () and coord2 == ():
             raise ValueError
-
-        coord1 = (y, x)
-        y += 1
-
-        # Find the second piece (they are in the same column)
-        while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
-            y += 1
-
-        if y > 9:
-            raise ValueError
-
-        coord2 = (y, x)  # y is greater than coord1
 
         if (is_red and location == '+') or (not is_red and location == '-'):
             return coord1
