@@ -91,11 +91,12 @@ class ChessGame:
                  _Piece('k', True), _Piece('a', True), _Piece('e', True), _Piece('h', True),
                  _Piece('r', True)],
             ]
-            self._is_red_active = red_active
-            self._move_count = move_count
-            self._valid_moves = []
 
-            self._recalculate_valid_moves()
+        self._is_red_active = red_active
+        self._move_count = move_count
+        self._valid_moves = []
+
+        self._recalculate_valid_moves()
 
     def __str__(self) -> str:
         """Return the string representation of the board, who is active, and valid moves.
@@ -150,7 +151,7 @@ class ChessGame:
 
     def is_red_move(self) -> bool:
         """Return whether the red player is to move next."""
-        return self.is_red_move()
+        return self._is_red_active
 
     def get_winner(self) -> Optional[str]:
         """Return the winner of the game (red or black) or 'draw' if the game ended in a draw.
@@ -612,8 +613,8 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
             return type + '+'
 
 
-def calculate_relative_points_for_board(board: list[list[Optional[_Piece]]]) -> int:
-    """Calculate the relative points for the given board.
+def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
+    """Calculate the absolute points for the given board.
 
     Each piece on the board holds a certain value and all pieces on the board will be
     accounted in calculating relative points. Red pieces contribute to positive points and

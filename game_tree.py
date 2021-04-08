@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Optional
 import csv
 import xml.etree.cElementTree as ET
+import math
 
 GAME_START_MOVE = '*'
 
@@ -174,15 +175,22 @@ class GameTree:
 
     def _update_win_probabilities(self) -> None:
         """Recalculate the red and black win probabilities of this tree."""
-        # TODO: Change the algorithm so that it is fair for both sides
         if self._subtrees == []:
-            return None
+            return
         else:
-            subtrees_win_prob = [subtree.red_win_probability for subtree in self._subtrees]
+            subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees]
+            subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees]
             if self.is_red_move:
-                self.red_win_probability = max(subtrees_win_prob)
+                self.red_win_probability = max(subtrees_win_prob_red)
+                # Averages the top 50% of the opponent's moves
+                half_len = math.ceil(len(subtrees_win_prob_black) / 2)
+                top_chances = sorted(subtrees_win_prob_black, reverse=True)[:half_len]
+                self.black_win_probability = sum(top_chances) / half_len
             else:
-                self.red_win_probability = sum(subtrees_win_prob) / len(subtrees_win_prob)
+                self.black_win_probability = max(subtrees_win_prob_black)
+                half_len = math.ceil(len(subtrees_win_prob_red) / 2)
+                top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
+                self.red_win_probability = sum(top_chances) / half_len
         return None
 
     def _calculate_relative_points(self) -> None:

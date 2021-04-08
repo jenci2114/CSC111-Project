@@ -2,7 +2,7 @@
 
 from typing import Optional
 import random
-from chess_game import ChessGame
+from chess_game import ChessGame, _Piece, calculate_absolute_points
 from game_tree import GameTree, load_game_tree, xml_to_tree
 
 
@@ -86,9 +86,6 @@ class RandomTreePlayer(Player):
 
         Preconditions:
             - There is at least one valid move for the given game
-
-        >>> tree = load_game_tree('data/small_sample.csv')
-        >>>
         """
         if self._game_tree is not None and previous_move is not None:
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
@@ -202,7 +199,56 @@ class ExploringPlayer(Player):
         Preconditions:
             - There is at least one valid move for the given game
         """
-        # TODO: implement the method
+        if previous_move is None:
+            pass
+        else:
+            self._game_tree = GameTree(previous_move, True)
+
+        self._alpha_beta(game, self._game_tree, self._depth,
+                         -1000000, 1000000, game.is_red_move())
+        best_moves = sorted(self._game_tree.get_subtrees(),
+                            key=lambda x: x.relative_points, reverse=True)
+        return best_moves[0].move
+
+    def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int, alpha: int, beta: int,
+                    self_is_red: bool) -> int:
+        """The alpha-beta pruning algorithm that will be used when this player makes a move.
+
+        Note: +- 1000000 will be used to represent +- infinity
+        """
+        if depth == 0 or game.get_winner() is not None:
+            value = calculate_absolute_points(game.get_board())
+            tree.relative_points = value
+            return value
+
+        if self_is_red == game.is_red_move():
+            value = -1000000
+            for move in game.get_valid_moves():
+                subtree = GameTree(move, self_is_red)
+                game_after_move = game.copy_and_make_move(move)
+                value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
+                                                    alpha, beta, self_is_red))
+                alpha = max(alpha, value)
+                tree.add_subtree(subtree)
+                if alpha >= beta:
+                    break  # beta cutoff
+
+            tree.relative_points = value
+            return value
+        else:  # Opponent's move
+            value = 1000000
+            for move in game.get_valid_moves():
+                subtree = GameTree(move, not self_is_red)
+                game_after_move = game.copy_and_make_move(move)
+                value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
+                                                    alpha, beta, self_is_red))
+                beta = min(beta, value)
+                tree.add_subtree(subtree)
+                if beta <= alpha:
+                    break  # alpha cutoff
+
+            tree.relative_points = value
+            return value
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
