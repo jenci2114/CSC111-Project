@@ -188,6 +188,8 @@ class GameTree:
     def _calculate_relative_points(self) -> None:
         """Calculate the relative points.
 
+        For the function that calculates the relative points for one board, see chess_game.py.
+
         We need to go back to all the ancestors to see the change of pieces.
         """
         # TODO: implement this method

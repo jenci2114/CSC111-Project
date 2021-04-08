@@ -612,6 +612,27 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
             return type + '+'
 
 
+def calculate_relative_points_for_board(board: list[list[Optional[_Piece]]]):
+    """Calculate the relative points for the given board.
+
+    Each piece on the board holds a certain value and all pieces on the board will be
+    accounted in calculating relative points. Red pieces contribute to positive points and
+    black pieces contribute to negative points. Different types of pieces have different values:
+        - King: 10000
+        - Rook/Chariot: 900
+        - Cannon: 450
+        - Horse: 400
+        - Elephant: 200
+        - Advisor: 200
+        - Soldier (after crossing river): 200
+        - Soldier (before crossing river): 100
+
+    Preconditions:
+        - board is in the format as defined previously.
+    """
+    # 把每个位置搜一遍，然后全部加起来
+
+
 class _Piece:
     """Represents a single piece in Chinese Chess.
 
