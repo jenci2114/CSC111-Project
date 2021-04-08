@@ -32,6 +32,7 @@ class GameTree:
     is_red_move: bool
     relative_points: int
     red_win_probability: float
+    black_win_probability: float
 
     # Private Instance Attributes:
     #  - _subtrees:
@@ -41,7 +42,7 @@ class GameTree:
 
     def __init__(self, move: str = GAME_START_MOVE,
                  is_red_move: bool = True, relative_points: int = 0,
-                 red_win_probability: float = 0.0) -> None:
+                 red_win_probability: float = 0.0, black_win_probability: float = 0.0) -> None:
         """Initialize a new game tree.
 
         >>> game = GameTree()
@@ -53,6 +54,7 @@ class GameTree:
         self.move = move
         self.is_red_move = is_red_move
         self.red_win_probability = red_win_probability
+        self.black_win_probability = black_win_probability
         self.relative_points = relative_points
         self._subtrees = []
 
@@ -74,7 +76,7 @@ class GameTree:
     def add_subtree(self, subtree: GameTree) -> None:
         """Add a subtree to this game tree."""
         self._subtrees.append(subtree)
-        self._update_red_win_probability()
+        self._update_win_probabilities()
 
     def __str__(self) -> str:
         """Return a string representation of this tree.
@@ -142,7 +144,7 @@ class GameTree:
             for subtree in self._subtrees:
                 if subtree.move == curr_move:
                     subtree.insert_move_index(curr_index + 1, moves, red_win_probability)
-                    self._update_red_win_probability()
+                    self._update_win_probabilities()
                     # an early return
                     return
 
@@ -163,12 +165,8 @@ class GameTree:
 
         return
 
-    def _update_red_win_probability(self) -> None:
-        """Recalculate the red win probability of this tree.
-
-        Note: This definition is from the perspective of Red, which should be changed after
-        discussion.
-        """
+    def _update_win_probabilities(self) -> None:
+        """Recalculate the red and black win probabilities of this tree."""
         # TODO: Change the algorithm so that it is fair for both sides
         if self._subtrees == []:
             return None
@@ -253,13 +251,23 @@ def load_game_tree(games_file: str) -> GameTree:
 def tree_to_xml(tree: GameTree, filename: str) -> None:
     """Store the given GameTree as an xml file with the given filename.
 
+    Note on naming of attributes (for shortening xml file size thus reducing running time):
+        - m: move
+        - i: is_red_move
+        - p: relative_points
+        - r: red_win_probability
+        - b: black_win_probability
+        - t: True
+        - f: False
+
     Precondition:
         - filename has suffix .xml
     """
+    bool_dict = {True: 't', False: 'f'}
     root = ET.Element('GameTree')
-    root_move = ET.SubElement(root, 'm', m=str(tree.move), i=str(tree.is_red_move),
-                              rel=str(tree.relative_points),
-                              r=str(tree.red_win_probability))
+    root_move = ET.SubElement(root, 'm', m=str(tree.move), i=bool_dict[tree.is_red_move],
+                              p=str(tree.relative_points),
+                              r=str(tree.red_win_probability), b=str(tree.black_win_probability))
     _build_e_tree(root_move, tree)
 
     xml_tree = ET.ElementTree(root)
@@ -271,12 +279,13 @@ def _build_e_tree(root_move: ET.Element, tree: GameTree) -> None:
 
     This function mutates its input Element.
     """
-    subtrees = ET.SubElement(root_move, 'sub')
+    bool_dict = {True: 't', False: 'f'}
     for subtree in tree.get_subtrees():
-        move = ET.SubElement(subtrees, 'm', m=str(subtree.move),
-                             i=str(subtree.is_red_move),
-                             rel=str(subtree.relative_points),
-                             r=str(subtree.red_win_probability))
+        move = ET.SubElement(root_move, 'm', m=str(subtree.move),
+                             i=bool_dict[subtree.is_red_move],
+                             p=str(subtree.relative_points),
+                             r=str(subtree.red_win_probability),
+                             b=str(subtree.black_win_probability))
         _build_e_tree(move, subtree)
 
 
@@ -301,10 +310,11 @@ def _build_game_tree(move: ET.Element, tree: GameTree) -> None:
     This function mutates its input tree.
     """
     tree.move = move.attrib['m']
-    tree.is_red_move = move.attrib['i'] == 'True'
-    tree.relative_points = int(move.attrib['rel'])
+    tree.is_red_move = move.attrib['i'] == 't'
+    tree.relative_points = int(move.attrib['p'])
     tree.red_win_probability = float(move.attrib['r'])
-    for child_move in move[0]:
+    tree.black_win_probability = float(move.attrib['b'])
+    for child_move in move:
         subtree = GameTree()
         _build_game_tree(child_move, subtree)
         tree.add_subtree(subtree)
