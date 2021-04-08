@@ -16,12 +16,14 @@ class GameTree:
     the current player (who will make the next move) is Red or Black.
 
     Instance Attributes:
-      - move: the current chess move (expressed in wxf notation), or '*' if this tree
-              represents the start of a game
-      - is_red_move: True if Red is to make the next move after this, False otherwise
-      - relative_points: the points of Red - the points of Black
-      - red_win_probability: the probability that Red will win from the current state
+        - move: the current chess move (expressed in wxf notation), or '*' if this tree
+                represents the start of a game
+        - is_red_move: True if Red is to make the next move after this, False otherwise
+        - relative_points: the points of Red minus the points of Black
+        - red_win_probability: the probability that Red will win from the current state
                                of the game
+        - black_win_probability: the probability that Black will win from the current state
+                                 of the game
 
     Representation Invariants:
         - self.move == GAME_START_MOVE or self.move is a valid chess move
@@ -102,7 +104,8 @@ class GameTree:
             return s
 
     def insert_move_sequence(self, moves: list[str],
-                             red_win_probability: float = 0.0) -> None:
+                             red_win_probability: float = 0.0,
+                             black_win_probability: float = 0.0) -> None:
         """Insert the given sequence of moves into this tree.
 
         The inserted moves form a chain of descendants, where:
@@ -132,10 +135,10 @@ class GameTree:
                   z -> Black's move
         <BLANKLINE>
         """
-        self.insert_move_index(0, moves, red_win_probability)
+        self.insert_move_index(0, moves, red_win_probability, black_win_probability)
 
     def insert_move_index(self, curr_index: int, moves: list[str],
-                          red_win_probability: float) -> None:
+                          red_win_probability: float, black_win_probability: float) -> None:
         """A help method for insert_move_sequence."""
         if curr_index == len(moves):
             return
@@ -143,7 +146,8 @@ class GameTree:
             curr_move = moves[curr_index]
             for subtree in self._subtrees:
                 if subtree.move == curr_move:
-                    subtree.insert_move_index(curr_index + 1, moves, red_win_probability)
+                    subtree.insert_move_index(curr_index + 1, moves,
+                                              red_win_probability, black_win_probability)
                     self._update_win_probabilities()
                     # an early return
                     return
@@ -154,16 +158,19 @@ class GameTree:
                 # should be Black
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=False,
-                                          red_win_probability=red_win_probability))
+                                          red_win_probability=red_win_probability,
+                                          black_win_probability=black_win_probability))
             else:
                 # should be Red
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=True,
-                                          red_win_probability=red_win_probability))
+                                          red_win_probability=red_win_probability,
+                                          black_win_probability=black_win_probability))
             # recurse for the next move in moves
-            self._subtrees[-1].insert_move_index(curr_index + 1, moves, red_win_probability)
+            self._subtrees[-1].insert_move_index(curr_index + 1, moves,
+                                                 red_win_probability, black_win_probability)
 
-        return
+            return
 
     def _update_win_probabilities(self) -> None:
         """Recalculate the red and black win probabilities of this tree."""
