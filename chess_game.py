@@ -612,7 +612,7 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
             return type + '+'
 
 
-def calculate_relative_points_for_board(board: list[list[Optional[_Piece]]]):
+def calculate_relative_points_for_board(board: list[list[Optional[_Piece]]]) -> int:
     """Calculate the relative points for the given board.
 
     Each piece on the board holds a certain value and all pieces on the board will be
@@ -624,13 +624,36 @@ def calculate_relative_points_for_board(board: list[list[Optional[_Piece]]]):
         - Horse: 400
         - Elephant: 200
         - Advisor: 200
-        - Soldier (after crossing river): 200
-        - Soldier (before crossing river): 100
+        - Pawn (after crossing river): 200
+        - Pawn (before crossing river): 100
 
     Preconditions:
         - board is in the format as defined previously.
     """
-    # 把每个位置搜一遍，然后全部加起来
+    point_dict = {'k': 10000, 'r': 900, 'c': 450, 'h': 400, 'e': 200, 'a': 200,
+                  'pa': 200, 'pb': 100}
+    points_so_far = 0
+    for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:
+        piece = board[pos[0]][pos[1]]
+        if piece is None:
+            continue
+        else:  # if there is a piece
+            # Determine whether to add or subtract points
+            if piece.is_red:
+                side = 1
+            else:
+                side = -1
+
+            # If time allows, add some other ways to gain points (e.g. cannon in the middle, etc.)
+            if piece.kind != 'p':
+                points_so_far += point_dict[piece.kind] * side
+            else:  # kind is pawn
+                if (piece.is_red and pos[0] <= 4) or (not piece.is_red and pos[0] >= 5):
+                    points_so_far += point_dict['pa'] * side
+                else:  # the pawn did not cross the river
+                    points_so_far += point_dict['pb'] * side
+
+    return points_so_far
 
 
 class _Piece:
