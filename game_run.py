@@ -3,6 +3,7 @@
 from __future__ import annotations
 from chess_game import ChessGame
 from player import Player, RandomTreePlayer, GreedyTreePlayer, LearningPlayer
+import game_tree
 
 import copy
 
@@ -55,3 +56,7 @@ def run_game(red: Player, black: Player, visualize: bool = False) -> tuple[str, 
             current_player = red
 
     return game.get_winner(), move_sequence
+
+
+if __name__ == '__main__':
+    run_game(LearningPlayer(4, 'data/tree.xml'), LearningPlayer(4, 'data/tree.xml'), True)

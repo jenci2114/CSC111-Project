@@ -219,9 +219,13 @@ class ExploringPlayer(Player):
         best_score = self._alpha_beta_multi(game, self._depth, -1000000, 1000000)
         best_moves = [s.move for s in self._game_tree.get_subtrees()
                       if s.relative_points == best_score]
+        chosen_move = random.choice(best_moves)
 
         print(f'Time taken to make this move: {time.time() - start_time} seconds')
-        return random.choice(best_moves)
+        print('Respective points for each move:')
+        print({s.move: s.relative_points for s in self._game_tree.get_subtrees()})
+        print(f'Move chosen: {chosen_move}')
+        return chosen_move
 
     def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int,
                     alpha: int, beta: int) -> int:
@@ -229,8 +233,12 @@ class ExploringPlayer(Player):
 
         Note: +- 1000000 will be used to represent +- infinity
         """
-        if depth == 0 or game.get_winner() is not None:
+        if depth == 0:
             value = calculate_absolute_points(game.get_board())
+            tree.relative_points = value
+            return value
+        elif game.get_winner() is not None:
+            value = calculate_absolute_points(game.get_board()) + depth * 1000
             tree.relative_points = value
             return value
 
@@ -395,7 +403,7 @@ class LearningPlayer(Player):
             black_win = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
                 maximum = max(red_win)
-                if maximum >= 0.2:
+                if maximum > 0:
                     maximum_index = red_win.index(maximum)
                     max_subtree = subtrees[maximum_index]
                     self._game_tree = max_subtree
@@ -405,7 +413,7 @@ class LearningPlayer(Player):
                     return explore.make_move(game, previous_move)
             else:  # if playing as black
                 maximum = max(black_win)
-                if maximum >= 0.2:
+                if maximum > 0:
                     maximum_index = black_win.index(maximum)
                     max_subtree = subtrees[maximum_index]
                     self._game_tree = max_subtree
@@ -420,6 +428,25 @@ class LearningPlayer(Player):
             self._game_tree = xml_to_tree(self._xml_file)
         except FileNotFoundError:
             self._game_tree = GameTree()
+
+
+class Human(Player):
+    """A human Chinese Chess player."""
+
+    def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
+        """Make a move based on the input."""
+        print('Please make your move: ')
+        move = input()
+        while move not in game.get_valid_moves():
+            print('Invalid move.')
+            print('Please make your move: ')
+            move = input()
+
+        return move
+
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        return  # Does nothing
 
 
 if __name__ == '__main__':

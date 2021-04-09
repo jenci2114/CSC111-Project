@@ -307,6 +307,9 @@ class ChessGame:
                     i += 1
                     y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
                     while 0 <= x <= 8 and 0 <= y <= 9:
+                        if board[y][x] is not None and board[y][x].is_red == is_red:
+                            # Cannot fire cannon
+                            break
                         if board[y][x] is not None and board[y][x].is_red != is_red:
                             # Can fire cannon
                             moves.append(_get_wxf_movement(board, pos, (y, x), is_red))
