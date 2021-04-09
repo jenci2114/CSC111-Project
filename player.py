@@ -116,8 +116,8 @@ class RandomTreePlayer(Player):
 
 
 class GreedyTreePlayer(Player):
-    """A Chinese Chess player that chooses a move based on the database,
-    using Minimax algorithm.
+    """A Chinese Chess player that chooses a move based on the database, choosing moves
+    based on win probability.
 
     If the player is red, then it will choose a move that has highest winning
     probability for red.
@@ -155,14 +155,15 @@ class GreedyTreePlayer(Player):
         else:
             subtrees = self._game_tree.get_subtrees()
             red_win = [sub.red_win_probability for sub in subtrees]
+            black_win = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
                 maximum = max(red_win)
                 maximum_index = red_win.index(maximum)
                 max_subtree = subtrees[maximum_index]
                 self._game_tree = max_subtree
             else:  # if playing as black
-                minimum = min(red_win)
-                minimum_index = red_win.index(minimum)
+                maximum = min(black_win)
+                minimum_index = black_win.index(maximum)
                 min_subtree = subtrees[minimum_index]
                 self._game_tree = min_subtree
 
@@ -188,13 +189,13 @@ class ExploringPlayer(Player):
     #   - _depth: the number of turns the player will explore
     _depth: int
 
-    def __init__(self, depth: int) -> None:
+    def __init__(self, depth: int, tree: GameTree = GameTree()) -> None:
         """Initialize this player.
 
         Preconditions:
             - depth >= 1
         """
-        self._game_tree = GameTree()
+        self._game_tree = tree
         self._depth = depth
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
@@ -381,7 +382,37 @@ class LearningPlayer(Player):
         Preconditions:
             - There is at least one valid move for the given game
         """
-        # TODO: implement the method
+        if self._game_tree is not None and previous_move is not None:
+            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
+
+        if self._game_tree is None or self._game_tree.get_subtrees() == []:
+            # no branches available so we explore new moves
+            explore = ExploringPlayer(self._depth)
+            return explore.make_move(game, previous_move)
+        else:
+            subtrees = self._game_tree.get_subtrees()
+            red_win = [sub.red_win_probability for sub in subtrees]
+            black_win = [sub.black_win_probability for sub in subtrees]
+            if self._game_tree.is_red_move:
+                maximum = max(red_win)
+                if maximum >= 0.2:
+                    maximum_index = red_win.index(maximum)
+                    max_subtree = subtrees[maximum_index]
+                    self._game_tree = max_subtree
+                    return self._game_tree.move
+                else:
+                    explore = ExploringPlayer(self._depth)
+                    return explore.make_move(game, previous_move)
+            else:  # if playing as black
+                maximum = max(black_win)
+                if maximum >= 0.2:
+                    maximum_index = black_win.index(maximum)
+                    max_subtree = subtrees[maximum_index]
+                    self._game_tree = max_subtree
+                    return self._game_tree.move
+                else:
+                    explore = ExploringPlayer(self._depth)
+                    return explore.make_move(game, previous_move)
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
