@@ -10,6 +10,7 @@ import time
 import os
 
 
+GAMES = []
 PROCESSES = 9
 
 
@@ -221,6 +222,7 @@ class ExploringPlayer(Player):
                       if s.relative_points == best_score]
         chosen_move = random.choice(best_moves)
 
+        GAMES.append(ChessGame(game.get_board(), game.is_red_move()))
         print(f'Time taken to make this move: {time.time() - start_time} seconds')
         print('Respective points for each move:')
         print({s.move: s.relative_points for s in self._game_tree.get_subtrees()})
@@ -238,7 +240,13 @@ class ExploringPlayer(Player):
             tree.relative_points = value
             return value
         elif game.get_winner() is not None:
-            value = calculate_absolute_points(game.get_board()) + depth * 1000
+            if game.get_winner() == 'Red':
+                side = 1
+            elif game.get_winner() == 'Black':
+                side = -1
+            else:  # draw
+                side = 0
+            value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
             tree.relative_points = value
             return value
 
@@ -447,6 +455,126 @@ class Human(Player):
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
         return  # Does nothing
+
+
+class AIBlack(Player):
+    """An AI chess player that always play as Black."""
+    # Private Instance Attributes:
+    #   - _depth: the number of turns the player will explore
+    #   - _current_tree: the GameTree consisting of all moves searched by this player
+    #   - _current_subtree: offspring of _current_tree that keeps track of the current game move
+
+    # Private Representation Invariants:
+    #   - self._current_tree is not None
+    _depth: int
+    _current_tree: GameTree
+    _current_subtree: GameTree
+
+    def __init__(self, xml_file: str, depth: int):
+        """Initialize this player.
+
+        Preconditions:
+            - xml_file can be converted to a tree that has nodes for the Black side
+        """
+        self._xml_file = xml_file
+        self._depth = depth
+        self._current_tree = GameTree()
+        self._current_subtree = self._current_tree
+
+        self.reload_tree()
+
+    def make_move(self, game: ChessGame, previous_move: str) -> str:
+        """Make a move as the black player."""
+        start_time = time.time()
+
+        new_subtree = GameTree(previous_move, False)
+        self._current_subtree.add_subtree(new_subtree)
+        self._current_subtree = new_subtree
+
+        if self._game_tree is not None:
+            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
+
+        if self._game_tree is None or self._game_tree.get_subtrees() == []:
+            # no branches available so we explore new moves
+            best_score = self._alpha_beta(game, self._current_subtree, self._depth,
+                                          -1000000, 1000000)
+            best_moves_subtree = [s for s in self._current_subtree.get_subtrees()
+                                  if s.relative_points == best_score]
+            chosen_subtree = sorted(best_moves_subtree, key=lambda x: x.black_win_probability,
+                                    reverse=True)[0]
+
+            self._current_subtree = chosen_subtree
+
+            print(f'Time taken to make this move: {time.time() - start_time} seconds')
+            print(f'Move chosen: {self._current_subtree.move}')
+            return self._current_subtree.move
+        else:
+            subtrees = self._game_tree.get_subtrees()
+            points = [sub.relative_points for sub in subtrees]
+            maximum = max(points)
+            maximum_index = points.index(maximum)
+            max_subtree = subtrees[maximum_index]
+            self._game_tree = max_subtree
+            self._current_subtree.add_subtree(max_subtree)
+            self._current_subtree = max_subtree
+            return self._game_tree.move
+
+    def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int,
+                    alpha: int, beta: int) -> int:
+        """The alpha-beta pruning algorithm that will be used when this player makes a move.
+
+        Note: +- 1000000 will be used to represent +- infinity
+        """
+        if depth == 0:
+            value = calculate_absolute_points(game.get_board())
+            tree.relative_points = value
+            return value
+        elif game.get_winner() is not None:
+            if game.get_winner() == 'Red':
+                side = 1
+            elif game.get_winner() == 'Black':
+                side = -1
+            else:  # draw
+                side = 0
+            value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
+            tree.relative_points = value
+            return value
+
+        if game.is_red_move():
+            value = -1000000
+            for move in game.get_valid_moves():
+                subtree = GameTree(move, True)
+                game_after_move = game.copy_and_make_move(move)
+                value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
+                                                    alpha, beta))
+                alpha = max(alpha, value)
+                tree.add_subtree(subtree)
+                if alpha >= beta:
+                    break  # beta cutoff
+
+            tree.relative_points = value
+            return value
+        else:  # Black's move
+            value = 1000000
+            for move in game.get_valid_moves():
+                subtree = GameTree(move, False)
+                game_after_move = game.copy_and_make_move(move)
+                value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
+                                                    alpha, beta))
+                beta = min(beta, value)
+                tree.add_subtree(subtree)
+                if beta <= alpha:
+                    break  # alpha cutoff
+
+            tree.relative_points = value
+            return value
+
+    def reload_tree(self) -> None:
+        """Reload the tree from the xml file as self._game_tree."""
+        try:
+            self._game_tree = xml_to_tree(self._xml_file)
+        except FileNotFoundError:
+            self._game_tree = None
 
 
 if __name__ == '__main__':
