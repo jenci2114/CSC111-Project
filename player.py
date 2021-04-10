@@ -242,8 +242,10 @@ class ExploringPlayer(Player):
         elif game.get_winner() is not None:
             if game.get_winner() == 'Red':
                 side = 1
+                tree.red_win_probability = 1.0
             elif game.get_winner() == 'Black':
                 side = -1
+                tree.black_win_probability = 1.0
             else:  # draw
                 side = 0
             value = calculate_absolute_points(game.get_board()) + depth * 5000 * side

@@ -79,7 +79,7 @@ class GameTree:
     def add_subtree(self, subtree: GameTree) -> None:
         """Add a subtree to this game tree."""
         self._subtrees.append(subtree)
-        # self._update_win_probabilities()
+        self._update_win_probabilities()
 
     def __str__(self) -> str:
         """Return a string representation of this tree.
@@ -193,12 +193,13 @@ class GameTree:
                 self.red_win_probability = sum(top_chances) / half_len
         return None
 
-    def _calculate_relative_points(self) -> None:
-        """Calculate the relative points.
+    def reevaluate(self) -> None:
+        """Re-evaluate the relative points and win-probabilities of this tree.
 
-        For the function that calculates the relative points for one board, see chess_game.py.
+        For the function that calculates the absolute points for one board, see chess_game.py.
 
-        We need to go back to all the ancestors to see the change of pieces.
+        This method will recurse all the way to the leaves to obtain the points and the
+        probabilities, then pass it back to each of the parents, going over the entire tree.
         """
         # TODO: implement this method
 
