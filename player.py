@@ -12,6 +12,7 @@ import os
 
 GAMES = []
 PROCESSES = 9
+EPSILON = 0
 
 
 class Player:
@@ -234,6 +235,9 @@ class ExploringPlayer(Player):
         """The alpha-beta pruning algorithm that will be used when this player makes a move.
 
         Note: +- 1000000 will be used to represent +- infinity
+
+        Preconditions:
+            - depth >= 0
         """
         if depth == 0:
             value = calculate_absolute_points(game.get_board())
@@ -248,6 +252,8 @@ class ExploringPlayer(Player):
                 tree.black_win_probability = 1.0
             else:  # draw
                 side = 0
+                tree.red_win_probability = 0.5
+                tree.black_win_probability = 0.5
             value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
             tree.relative_points = value
             return value
@@ -311,9 +317,9 @@ class ExploringPlayer(Player):
             p.join()
 
         for i in range(len(moves)):
-            subtree = xml_to_tree(f'process{i}.xml')
+            subtree = xml_to_tree(f'temp/process{i}.xml')
             self._game_tree.add_subtree(subtree)
-            os.remove(f'process{i}.xml')
+            os.remove(f'temp/process{i}.xml')
 
         if game.is_red_move():
             value = max(s.relative_points for s in self._game_tree.get_subtrees())
@@ -330,31 +336,32 @@ class ExploringPlayer(Player):
         Preconditions:
             - must be called by _alpha_beta_multi
         """
+        possible_moves = game.get_valid_moves()
         if game.is_red_move():
             value = -1000000
             for i in range(start, end):
-                move = game.get_valid_moves()[i]
+                move = possible_moves[i]
                 subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
                 alpha = max(alpha, value)
 
-                tree_to_xml(subtree, f'process{i}.xml')
+                tree_to_xml(subtree, f'temp/process{i}.xml')
 
                 if alpha >= beta:
                     break  # beta cutoff
         else:
             value = 1000000
             for i in range(start, end):
-                move = game.get_valid_moves()[i]
+                move = possible_moves[i]
                 subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
                 beta = min(beta, value)
 
-                tree_to_xml(subtree, f'process{i}.xml')
+                tree_to_xml(subtree, f'temp/process{i}.xml')
 
                 if beta <= alpha:
                     break  # alpha cutoff
@@ -416,7 +423,7 @@ class LearningPlayer(Player):
             black_win = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
                 maximum = max(red_win)
-                if maximum > 0:
+                if maximum > EPSILON:
                     maximum_index = red_win.index(maximum)
                     max_subtree = subtrees[maximum_index]
                     self._game_tree = max_subtree
@@ -426,7 +433,7 @@ class LearningPlayer(Player):
                     return explore.make_move(game, previous_move)
             else:  # if playing as black
                 maximum = max(black_win)
-                if maximum > 0:
+                if maximum > EPSILON:
                     maximum_index = black_win.index(maximum)
                     max_subtree = subtrees[maximum_index]
                     self._game_tree = max_subtree
