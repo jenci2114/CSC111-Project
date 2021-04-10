@@ -212,7 +212,7 @@ class ExploringPlayer(Player):
         if previous_move is None:
             pass
         else:
-            self._game_tree = GameTree(previous_move, True)
+            self._game_tree = GameTree(previous_move, game.is_red_move())
 
         # Non-multiprocessing version
         # best_score = self._alpha_beta(game, self._game_tree, self._depth, -1000000, 1000000)
@@ -361,6 +361,10 @@ class ExploringPlayer(Player):
         """Reload the tree from the xml file as self._game_tree."""
         self._game_tree = GameTree()
 
+    def get_tree(self) -> GameTree:
+        """Return self._game_tree."""
+        return self._game_tree
+
 
 class LearningPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore some possible moves
@@ -484,28 +488,20 @@ class AIBlack(Player):
 
     def make_move(self, game: ChessGame, previous_move: str) -> str:
         """Make a move as the black player."""
-        start_time = time.time()
 
         new_subtree = GameTree(previous_move, False)
-        self._current_subtree.add_subtree(new_subtree)
-        self._current_subtree = new_subtree
 
         if self._game_tree is not None:
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no branches available so we explore new moves
-            best_score = self._alpha_beta_multi(game, self._depth, -1000000, 1000000)
-            best_moves_subtree = [s for s in self._current_subtree.get_subtrees()
-                                  if s.relative_points == best_score]
-            chosen_subtree = sorted(best_moves_subtree, key=lambda x: x.black_win_probability,
-                                    reverse=True)[0]
+            explorer = ExploringPlayer(self._depth)
+            move = explorer.make_move(game, previous_move)
+            new_subtree = explorer.get_tree()
+            self._current_subtree.add_subtree(new_subtree)
+            self._current_subtree = new_subtree
 
-            self._current_subtree = chosen_subtree
-
-            print(f'Time taken to make this move: {time.time() - start_time} seconds')
-            print(f'Move chosen: {self._current_subtree.move}')
-            return self._current_subtree.move
+            return move
         else:
             subtrees = self._game_tree.get_subtrees()
             points = [sub.relative_points for sub in subtrees]
@@ -516,116 +512,6 @@ class AIBlack(Player):
             self._current_subtree.add_subtree(max_subtree)
             self._current_subtree = max_subtree
             return self._game_tree.move
-
-    def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int,
-                    alpha: int, beta: int) -> int:
-        """The alpha-beta pruning algorithm that will be used when this player makes a move.
-
-        Note: +- 1000000 will be used to represent +- infinity
-        """
-        if depth == 0:
-            value = calculate_absolute_points(game.get_board())
-            tree.relative_points = value
-            return value
-        elif game.get_winner() is not None:
-            if game.get_winner() == 'Red':
-                side = 1
-            elif game.get_winner() == 'Black':
-                side = -1
-            else:  # draw
-                side = 0
-            value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
-            tree.relative_points = value
-            return value
-
-        if game.is_red_move():
-            value = -1000000
-            for move in game.get_valid_moves():
-                subtree = GameTree(move, True)
-                game_after_move = game.copy_and_make_move(move)
-                value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
-                                                    alpha, beta))
-                alpha = max(alpha, value)
-                tree.add_subtree(subtree)
-                if alpha >= beta:
-                    break  # beta cutoff
-
-            tree.relative_points = value
-            return value
-        else:  # Black's move
-            value = 1000000
-            for move in game.get_valid_moves():
-                subtree = GameTree(move, False)
-                game_after_move = game.copy_and_make_move(move)
-                value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
-                                                    alpha, beta))
-                beta = min(beta, value)
-                tree.add_subtree(subtree)
-                if beta <= alpha:
-                    break  # alpha cutoff
-
-            tree.relative_points = value
-            return value
-
-    def _alpha_beta_multi(self, game: ChessGame, depth: int,
-                          alpha: int, beta: int) -> int:
-        """The alpha-beta pruning algorithm that is functionally identical to the
-        above implementation, except this one uses multiprocessing.
-
-        Warning: Do NOT recurse on this method, recurse on the non-multiprocessing method.
-
-        Preconditions:
-            - The turn is MINIMIZING (i.e. the black player is making this turn)
-            - depth > 0
-            - Game has not finished
-        """
-        processes = []
-        moves = game.get_valid_moves()
-        per_process, last_process = divmod(len(moves), PROCESSES - 1)
-        start, end = 0, per_process
-        for i in range(PROCESSES):
-            process = multiprocessing.Process(target=self._alpha_beta_process,
-                                              args=(game, depth, alpha, beta, start, end))
-            processes.append(process)
-            process.start()
-            if i != PROCESSES - 2:
-                start, end = end, end + per_process
-            else:
-                start, end = end, end + last_process
-
-        for p in processes:
-            p.join()
-
-        for i in range(len(moves)):
-            subtree = xml_to_tree(f'process{i}.xml')
-            self._current_subtree.add_subtree(subtree)
-            os.remove(f'process{i}.xml')
-
-        value = min(s.relative_points for s in self._current_subtree.get_subtrees())
-        self._current_subtree.relative_points = value
-        return value
-
-    def _alpha_beta_process(self, game: ChessGame, depth: int,
-                            alpha: int, beta: int, start: int, end: int) -> None:
-        """This helper method will be called PROCESSES number of times, performing
-        the alpha-beta pruning algorithm over multiple processes.
-
-        Preconditions:
-            - must be called by _alpha_beta_multi
-        """
-        value = 1000000
-        for i in range(start, end):
-            move = game.get_valid_moves()[i]
-            subtree = GameTree(move, False)
-            game_after_move = game.copy_and_make_move(move)
-            value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
-                                                alpha, beta))
-            beta = min(beta, value)
-
-            tree_to_xml(subtree, f'process{i}.xml')
-
-            if beta <= alpha:
-                break  # alpha cutoff
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
