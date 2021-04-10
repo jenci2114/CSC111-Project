@@ -79,7 +79,7 @@ class GameTree:
     def add_subtree(self, subtree: GameTree) -> None:
         """Add a subtree to this game tree."""
         self._subtrees.append(subtree)
-        self._update_win_probabilities()
+        # self._update_win_probabilities()
 
     def __str__(self) -> str:
         """Return a string representation of this tree.
