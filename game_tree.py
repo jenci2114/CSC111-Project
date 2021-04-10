@@ -7,6 +7,9 @@ import csv
 import xml.etree.cElementTree as ET
 import math
 
+import chess_game
+from chess_game import ChessGame
+
 GAME_START_MOVE = '*'
 
 
@@ -104,7 +107,7 @@ class GameTree:
                 s += subtree._str_indented(depth + 1)
             return s
 
-    def insert_move_sequence(self, moves: list[str],
+    def insert_move_sequence(self, moves: list[str], points: list[int],
                              red_win_probability: float = 0.0,
                              black_win_probability: float = 0.0) -> None:
         """Insert the given sequence of moves into this tree.
@@ -116,7 +119,7 @@ class GameTree:
             - etc.
 
         >>> gt = GameTree()
-        >>> gt.insert_move_sequence(['a', 'b', 'c', 'd'])
+        >>> gt.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
         >>> print(gt)
         * -> Red's move
           a -> Black's move
@@ -124,7 +127,7 @@ class GameTree:
               c -> Black's move
                 d -> Red's move
         <BLANKLINE>
-        >>> gt.insert_move_sequence(['a', 'b', 'x', 'y', 'z'])
+        >>> gt.insert_move_sequence(['a', 'b', 'x', 'y', 'z'], [1, 2, 3, 4, 5])
         >>> print(gt)
         * -> Red's move
           a -> Black's move
@@ -136,18 +139,19 @@ class GameTree:
                   z -> Black's move
         <BLANKLINE>
         """
-        self.insert_move_index(0, moves, red_win_probability, black_win_probability)
+        self.insert_move_index(0, moves, points, red_win_probability, black_win_probability)
 
-    def insert_move_index(self, curr_index: int, moves: list[str],
+    def insert_move_index(self, curr_index: int, moves: list[str], points: list[int],
                           red_win_probability: float, black_win_probability: float) -> None:
         """A help method for insert_move_sequence."""
         if curr_index == len(moves):
             return
         else:
             curr_move = moves[curr_index]
+            relative_point = points[curr_index]
             for subtree in self._subtrees:
                 if subtree.move == curr_move:
-                    subtree.insert_move_index(curr_index + 1, moves,
+                    subtree.insert_move_index(curr_index + 1, moves, points,
                                               red_win_probability, black_win_probability)
                     self._update_win_probabilities()
                     # an early return
@@ -155,23 +159,29 @@ class GameTree:
 
             # there is no early return after the for loop,
             # which means we need to create a new subtree
+            if relative_point > 5000:
+                red_win_probability = 1
+            elif relative_point < -5000:
+                black_win_probability = 1
+
             if self.is_red_move:
                 # should be Black
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=False,
+                                          relative_points=relative_point,
                                           red_win_probability=red_win_probability,
                                           black_win_probability=black_win_probability))
             else:
                 # should be Red
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=True,
+                                          relative_points=relative_point,
                                           red_win_probability=red_win_probability,
                                           black_win_probability=black_win_probability))
             # recurse for the next move in moves
-            self._subtrees[-1].insert_move_index(curr_index + 1, moves,
+            self._subtrees[-1].insert_move_index(curr_index + 1, moves, points,
                                                  red_win_probability, black_win_probability)
-
-            return
+            self._update_win_probabilities()
 
     def _update_win_probabilities(self) -> None:
         """Recalculate the red and black win probabilities of this tree."""
@@ -201,7 +211,6 @@ class GameTree:
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
         """
-        # TODO: implement this method
 
 
 def load_game_tree(games_file: str) -> GameTree:
@@ -256,13 +265,20 @@ def load_game_tree(games_file: str) -> GameTree:
     for game_id in games:
         # game is a list consisting of many lists, with each list representing a turn
         game = games[game_id]
+        new_game = ChessGame()
         sequence_so_far = []  # collect the red-black turn of game
+        points_so_far = []  # the relative point corresponding to sequence_so_far
 
         for turn in game:
             sequence_so_far += turn
+            for move in turn:
+                new_game.make_move(move)
+                board = new_game.get_board()
+                points_so_far.append(chess_game.calculate_absolute_points(board))
 
-        tree.insert_move_sequence(sequence_so_far)
+        tree.insert_move_sequence(sequence_so_far, points_so_far)
 
+    tree.reevaluate()
     return tree
 
 
@@ -350,3 +366,5 @@ if __name__ == '__main__':
     #     'max-line-length': 100,
     #     'disable': ['E1136'],
     # })
+    t = load_game_tree('data/moves.csv')
+    prob = t.red_win_probability
