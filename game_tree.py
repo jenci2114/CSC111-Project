@@ -11,6 +11,7 @@ import chess_game
 from chess_game import ChessGame
 
 GAME_START_MOVE = '*'
+ESTIMATION = 0.8
 
 
 class GameTree:
@@ -159,10 +160,12 @@ class GameTree:
 
             # there is no early return after the for loop,
             # which means we need to create a new subtree
-            if relative_point > 5000:
-                red_win_probability = 1
-            elif relative_point < -5000:
-                black_win_probability = 1
+            if curr_index == len(moves) - 1:  # this is the last move
+                if len(moves) % 2 == 1:
+                    # Red is the winner since Black did not move after Red made a move
+                    red_win_probability = 1
+                else:
+                    black_win_probability = 1
 
             if self.is_red_move:
                 # should be Black
@@ -193,12 +196,12 @@ class GameTree:
             if self.is_red_move:
                 self.red_win_probability = max(subtrees_win_prob_red)
                 # Averages the top 50% of the opponent's moves
-                half_len = math.ceil(len(subtrees_win_prob_black) / 2)
+                half_len = math.ceil(len(subtrees_win_prob_black) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_black, reverse=True)[:half_len]
                 self.black_win_probability = sum(top_chances) / half_len
             else:
                 self.black_win_probability = max(subtrees_win_prob_black)
-                half_len = math.ceil(len(subtrees_win_prob_red) / 2)
+                half_len = math.ceil(len(subtrees_win_prob_red) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
                 self.red_win_probability = sum(top_chances) / half_len
         return None
@@ -211,6 +214,7 @@ class GameTree:
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
         """
+        # TODO: implement this method
 
 
 def load_game_tree(games_file: str) -> GameTree:
@@ -271,14 +275,14 @@ def load_game_tree(games_file: str) -> GameTree:
 
         for turn in game:
             sequence_so_far += turn
-            for move in turn:
-                new_game.make_move(move)
-                board = new_game.get_board()
-                points_so_far.append(chess_game.calculate_absolute_points(board))
+        for move in sequence_so_far:
+            new_game.make_move(move)
+            board = new_game.get_board()
+            points_so_far.append(chess_game.calculate_absolute_points(board))
 
         tree.insert_move_sequence(sequence_so_far, points_so_far)
 
-    tree.reevaluate()
+    # tree.reevaluate()
     return tree
 
 
@@ -367,4 +371,5 @@ if __name__ == '__main__':
     #     'disable': ['E1136'],
     # })
     t = load_game_tree('data/moves.csv')
-    prob = t.red_win_probability
+    print(t.red_win_probability)
+    print(t.black_win_probability)
