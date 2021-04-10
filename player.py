@@ -587,9 +587,7 @@ class AIBlack(Player):
             process = multiprocessing.Process(target=self._alpha_beta_process,
                                               args=(game, depth, alpha, beta, start, end))
             processes.append(process)
-            p_time = time.time()
             process.start()
-            print(f'Process {i} started, startting time {time.time() - p_time}')
             if i != PROCESSES - 2:
                 start, end = end, end + per_process
             else:
