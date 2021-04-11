@@ -11,11 +11,11 @@ Copyright and Usage Information
 
 This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
 """
-
+from __future__ import annotations
 from typing import Optional
-import random
 from chess_game import ChessGame, _Piece, calculate_absolute_points
 from game_tree import GameTree, load_game_tree, xml_to_tree, tree_to_xml
+import game_run
 import multiprocessing
 import random
 import time
@@ -236,20 +236,44 @@ class ExploringPlayer(Player):
         if previous_move is None:
             pass
         else:
-            self._game_tree = GameTree(previous_move, game.is_red_move(), red_win_probability=-1,
-                                       black_win_probability=-1)
+            self._game_tree = GameTree(previous_move, game.is_red_move())
 
         # Non-multiprocessing version
         # best_score = self._alpha_beta(game, self._game_tree, self._depth, -1000000, 1000000)
 
+        # Obtain subtrees with the best point
         best_score = self._alpha_beta_multi(game, self._depth, -1000000, 1000000)
-        best_moves = [s.move for s in self._game_tree.get_subtrees()
-                      if s.relative_points == best_score]
-        chosen_move = random.choice(best_moves)
+        subtrees = self._game_tree.get_subtrees()
+        candidate_subtrees = [s for s in subtrees if s.relative_points == best_score]
+
+        if game.is_red_move():
+            # Obtain subtrees with the best self win probability
+            max_probability = max(s.red_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.red_win_probability == max_probability]
+
+            # Obtain subtrees with the lowest opponent win probability
+            min_probability = min(s.black_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.black_win_probability == min_probability]
+        else:  # not game.is_red_move()
+            # Obtain subtrees with the best self win probability
+            max_probability = max(s.black_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.black_win_probability == max_probability]
+
+            # Obtain subtrees with the lowest opponent win probability
+            min_probability = min(s.red_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.red_win_probability == min_probability]
+
+        # If there are still ties, choose one randomly
+        chosen_move = random.choice(candidate_subtrees).move
 
         print(f'Time taken to make this move: {time.time() - start_time} seconds')
-        print('Respective points for each move:')
-        print({s.move: s.relative_points for s in self._game_tree.get_subtrees()})
+        print('Respective points, red win probability, black win probability for each move:')
+        print({s.move: (s.relative_points, s.red_win_probability, s.black_win_probability)
+               for s in self._game_tree.get_subtrees()})
         print(f'Move chosen: {chosen_move}')
         return chosen_move
 
@@ -262,29 +286,31 @@ class ExploringPlayer(Player):
         Preconditions:
             - depth >= 0
         """
-        if depth == 0:
-            value = calculate_absolute_points(game.get_board())
-            tree.relative_points = value
-            return value
-        elif game.get_winner() is not None:
+        if game.get_winner() is not None:
             if game.get_winner() == 'Red':
                 side = 1
                 tree.red_win_probability = 1.0
+                tree.black_win_probability = 0.0
             elif game.get_winner() == 'Black':
                 side = -1
                 tree.black_win_probability = 1.0
+                tree.red_win_probability = 0.0
             else:  # draw
                 side = 0
-                tree.red_win_probability = 0.5
-                tree.black_win_probability = 0.5
+                tree.red_win_probability = 0.0
+                tree.black_win_probability = 0.0
             value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
+            tree.relative_points = value
+            return value
+        elif depth == 0:
+            value = calculate_absolute_points(game.get_board())
             tree.relative_points = value
             return value
 
         if game.is_red_move():
             value = -1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, False, red_win_probability=-1, black_win_probability=-1)
+                subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -298,7 +324,7 @@ class ExploringPlayer(Player):
         else:  # Black's move
             value = 1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, True, red_win_probability=-1, black_win_probability=-1)
+                subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -569,22 +595,38 @@ class AIBlack(Player):
         else:
             new_subtree = GameTree(previous_move, False)
             subtrees = self._game_tree.get_subtrees()
-            points = [sub.relative_points for sub in subtrees]
-            maximum = max(points)
-            maximum_index = points.index(maximum)
-            max_subtree = subtrees[maximum_index]
-            self._game_tree = max_subtree
+
+            # Obtain subtrees with the lowest point
+            min_point = min(s.relative_points for s in subtrees)
+            candidate_subtrees = [s for s in subtrees if s.relative_points == min_point]
+
+            # Obtain subtrees with the highest self win probability
+            max_probability = max(s.black_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.black_win_probability == max_probability]
+
+            # Obtain subtrees with the lowest opponent win probability
+            min_probability = min(s.red_win_probability for s in candidate_subtrees)
+            candidate_subtrees = [s for s in candidate_subtrees
+                                  if s.red_win_probability == min_probability]
+
+            # If there are still ties, choose one in random
+            chosen_subtree = random.choice(candidate_subtrees)
+            self._game_tree = chosen_subtree
             self._current_subtree.add_subtree(new_subtree)
-            self._current_subtree.add_subtree(max_subtree)
-            self._current_subtree = self._current_subtree.find_subtree_by_move(max_subtree.move)
+            self._current_subtree.add_subtree(chosen_subtree)
+            self._current_subtree = self._current_subtree.find_subtree_by_move(chosen_subtree.move)
             return self._game_tree.move
 
     def store_tree(self) -> None:
         """Merge the tree generated with the tree given at the start of the game, then replace the
         file containing the original tree with the new, bigger tree.
         """
+        print('Reloading tree...')
         self.reload_tree()
+        print('Merging trees...')
         self._game_tree.merge_with(self._current_tree)
+        print('Storing tree...')
         tree_to_xml(self._game_tree, self._xml_file)
 
     def reload_tree(self) -> None:
@@ -593,6 +635,27 @@ class AIBlack(Player):
             self._game_tree = xml_to_tree(self._xml_file)
         except FileNotFoundError:
             self._game_tree = None
+
+
+def train_black_ai(file: str, depth: int, iterations: int) -> None:
+    """Train the black ai by expanding the tree stored in file.
+
+    This function creates an AIBlack player with the given file and the given depth. This function
+    also creates an exploring player of depth 3. <iterations> number of games will be run between
+    them and the tree will be stored after each game.
+
+    Preconditions:
+        - file represents a valid game tree
+        - depth > 0
+        - iterations > 0
+    """
+    ai_player = AIBlack(file, depth)
+    exploring_player = ExploringPlayer(3)
+
+    for _ in range(iterations):
+        game_run.run_games(1, exploring_player, ai_player, True)
+        ai_player.store_tree()
+
 
 if __name__ == '__main__':
     # To avoid RecursionError
