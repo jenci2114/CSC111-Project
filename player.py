@@ -10,7 +10,6 @@ import time
 import os
 
 
-GAMES = []
 PROCESSES = 9
 EPSILON = 0
 
@@ -223,7 +222,6 @@ class ExploringPlayer(Player):
                       if s.relative_points == best_score]
         chosen_move = random.choice(best_moves)
 
-        GAMES.append(ChessGame(game.get_board(), game.is_red_move()))
         print(f'Time taken to make this move: {time.time() - start_time} seconds')
         print('Respective points for each move:')
         print({s.move: s.relative_points for s in self._game_tree.get_subtrees()})
@@ -261,7 +259,7 @@ class ExploringPlayer(Player):
         if game.is_red_move():
             value = -1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, True)
+                subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -275,7 +273,7 @@ class ExploringPlayer(Player):
         else:  # Black's move
             value = 1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, False)
+                subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -341,7 +339,7 @@ class ExploringPlayer(Player):
             value = -1000000
             for i in range(start, end):
                 move = possible_moves[i]
-                subtree = GameTree(move, True)
+                subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -355,7 +353,7 @@ class ExploringPlayer(Player):
             value = 1000000
             for i in range(start, end):
                 move = possible_moves[i]
-                subtree = GameTree(move, False)
+                subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -497,9 +495,6 @@ class AIBlack(Player):
 
     def make_move(self, game: ChessGame, previous_move: str) -> str:
         """Make a move as the black player."""
-
-        new_subtree = GameTree(previous_move, False)
-
         if self._game_tree is not None:
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
@@ -508,19 +503,29 @@ class AIBlack(Player):
             move = explorer.make_move(game, previous_move)
             new_subtree = explorer.get_tree()
             self._current_subtree.add_subtree(new_subtree)
-            self._current_subtree = new_subtree
+            self._current_subtree = self._current_subtree.find_subtree_by_move(new_subtree.move)
 
             return move
         else:
+            new_subtree = GameTree(previous_move, False)
             subtrees = self._game_tree.get_subtrees()
             points = [sub.relative_points for sub in subtrees]
             maximum = max(points)
             maximum_index = points.index(maximum)
             max_subtree = subtrees[maximum_index]
             self._game_tree = max_subtree
+            self._current_subtree.add_subtree(new_subtree)
             self._current_subtree.add_subtree(max_subtree)
-            self._current_subtree = max_subtree
+            self._current_subtree = self._current_subtree.find_subtree_by_move(max_subtree.move)
             return self._game_tree.move
+
+    def store_tree(self) -> None:
+        """Merge the tree generated with the tree given at the start of the game, then replace the
+        file containing the original tree with the new, bigger tree.
+        """
+        self.reload_tree()
+        self._game_tree.merge_with(self._current_tree)
+        tree_to_xml(self._game_tree, self._xml_file)
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
