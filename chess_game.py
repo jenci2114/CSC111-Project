@@ -575,6 +575,8 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
             y += 1
 
         if y > 9:
+            print_board(board)
+            print(piece)
             raise ValueError
         else:
             return (y, x)
@@ -648,7 +650,6 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
             else:
                 side = -1
 
-            # If time allows, add some other ways to gain points (e.g. cannon in the middle, etc.)
             if piece.kind != 'p':
                 points_so_far += point_dict[piece.kind] * side
             else:  # kind is pawn
@@ -656,6 +657,44 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
                     points_so_far += point_dict['pa'] * side
                 else:  # the pawn did not cross the river
                     points_so_far += point_dict['pb'] * side
+
+        # Below are location-based evaluations
+
+        # Cannon in the middle check
+        if pos[1] == 4 and pos[0] in {3, 4, 5} and piece == _Piece('c', True):
+            points_so_far += 80
+        elif pos[1] == 4 and pos[0] in {4, 5, 6} and piece == _Piece('c', False):
+            points_so_far -= 80
+
+        # Cannon in the back check
+        if pos[0] == 0 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', True):
+            points_so_far += 50
+        elif pos[0] == 9 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', False):
+            points_so_far -= 50
+
+        # Head pawn existence check
+        if pos[1] == 4 and pos[0] == 6 and piece == _Piece('p', True):
+            points_so_far += 20
+        elif pos[1] == 4 and pos[0] == 3 and piece == _Piece('p', False):
+            points_so_far -= 20
+
+        # Horse in the barn check
+        if pos[0] == 1 and pos[1] in {2, 6} and piece == _Piece('h', True):
+            points_so_far += 100
+        elif pos[0] == 8 and pos[1] in {2, 6} and piece == _Piece('h', False):
+            points_so_far -= 100
+
+        # Horse in the palace check
+        if pos[0] == 2 and pos[1] in {3, 5} and piece == _Piece('h', True):
+            points_so_far += 50
+        elif pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('h', False):
+            points_so_far -= 50
+
+        # Elephant on guard check
+        if pos[0] == 7 and pos[1] == 4 and piece == _Piece('e', True):
+            points_so_far += 30
+        elif pos[0] == 2 and pos[1] == 4 and piece == _Piece('e', False):
+            points_so_far -= 30
 
     return points_so_far
 
