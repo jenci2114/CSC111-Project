@@ -1,4 +1,16 @@
-"""Player"""
+"""CSC111 Final Project: AI Player in Chinese Chess
+
+Module Description
+===============================
+
+This Python module contains Player classes, including RandomPlayer, RandomTreePlayer,
+GreedyTreePlayer, ExploringPlayer, LearningPlayer, Human, AIRed and AIBlack.
+
+Copyright and Usage Information
+===============================
+
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+"""
 
 from typing import Optional
 import random
@@ -11,7 +23,7 @@ import os
 
 
 PROCESSES = 9
-EPSILON = 0
+EPSILON = 0.2
 
 
 class Player:
@@ -44,7 +56,7 @@ class Player:
 
 
 class RandomPlayer(Player):
-    """A Chinese Chess AI whose strategy is always picking a random move."""
+    """A Chinese Chess player that chooses random moves."""
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -64,7 +76,7 @@ class RandomPlayer(Player):
 
 
 class RandomTreePlayer(Player):
-    """A Chinese Chess player that plays randomly based on a given GameTree.
+    """A Chinese Chess player that chooses random moves based on a given game tree.
 
     This player uses a game tree to make moves, descending into the tree as the game is played.
     On its turn:
@@ -117,14 +129,17 @@ class RandomTreePlayer(Player):
 
 
 class GreedyTreePlayer(Player):
-    """A Chinese Chess player that chooses a move based on the database, choosing moves
+    """A Chinese Chess player that plays using a game tree, choosing moves
     based on win probability.
 
-    If the player is red, then it will choose a move that has highest winning
-    probability for red.
+    If the player is red, then it will choose a move in the subtrees
+    that has highest winning probability for red.
 
-    If the player is black, then it will choose a move that has lowest winning
-    probability for red.
+    If the player is black, then it will choose a move in the subtrees
+    that has highest winning probability for black.
+
+    If there is no available moves in the subtrees, then the player will
+    randomly choose a valid move.
     """
 
     def __init__(self, xml_file: str) -> None:
@@ -149,20 +164,25 @@ class GreedyTreePlayer(Player):
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no branches available so we make a random move
+            # no branches available so the player will choose a random move
             possible_moves = game.get_valid_moves()
             self._game_tree = None
             return random.choice(possible_moves)
-        else:
+        else:  # the player will choose the move with highest win probability
             subtrees = self._game_tree.get_subtrees()
+            # create a list of red win probability corresponding to all subtrees
             red_win = [sub.red_win_probability for sub in subtrees]
+            # create a list of red win probability corresponding to all subtrees
             black_win = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
+                # the player will choose a move with highest winning probability for red
                 maximum = max(red_win)
                 maximum_index = red_win.index(maximum)
+                # find the subtree with the highest red win probability
                 max_subtree = subtrees[maximum_index]
                 self._game_tree = max_subtree
             else:  # if playing as black
+                # similar to the previous case
                 maximum = min(black_win)
                 minimum_index = black_win.index(maximum)
                 min_subtree = subtrees[minimum_index]
@@ -177,10 +197,14 @@ class GreedyTreePlayer(Player):
         except FileNotFoundError:
             self._game_tree = None
 
+# TODO: Add more explanations on alpha-beta algorithm
+
 
 class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
      and find a locally optimal move.
+
+     TODO: If there is more than one optimal move, then ....
 
      Note: This player does not need an existing tree to select a moves from.
      Instead, it will explore all recent moves and choose a locally optimal.
@@ -374,14 +398,15 @@ class ExploringPlayer(Player):
 
 
 class LearningPlayer(Player):
-    """A Chinese Chess player that uses alpha-beta algorithm to explore some possible moves
-     based on its experience and find a locally optimal move. It's a player which has some
-     previous experience in Chinese Chess but has its own idea to explore a better strategy.
+    """A Chinese Chess player that can play based on a game tree and also explore new moves.
 
-     The new moves this player will explore are...
+    We use EPSILON to represent its exploring rate:
+        - if the largest win probability of moves in subtrees > EPSILON, then the player will
+          choose this move
+        - else, the player will use the alpha-beta algorithm to explore a locally optimal move
+          with depth of self._depth
 
-     Note: This player should not be totally new to Chinese Chess. It has some previous
-     experience in Chinese Chess, and therefore its game tree should not be empty.
+    Note: This player will be used for training.
 
     """
     # Private Instance Attributes:
@@ -409,27 +434,35 @@ class LearningPlayer(Player):
             - There is at least one valid move for the given game
         """
         if self._game_tree is not None and previous_move is not None:
+            # update the game tree with the previous move
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no branches available so we explore new moves
+            # no branches available so the player will explore new moves
+            # then the player will perform the same as ExploringPlayer
             explore = ExploringPlayer(self._depth)
             return explore.make_move(game, previous_move)
-        else:
+        else:  # check the win probability
             subtrees = self._game_tree.get_subtrees()
             red_win = [sub.red_win_probability for sub in subtrees]
             black_win = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
                 maximum = max(red_win)
                 if maximum > EPSILON:
+                    # the best move reaches our expectation and
+                    # the player does not need to explore a new move
                     maximum_index = red_win.index(maximum)
                     max_subtree = subtrees[maximum_index]
+                    # update the game tree
                     self._game_tree = max_subtree
                     return self._game_tree.move
-                else:
+                else:  # maximum <= EPSILON
+                    # the player needs to explore locally optimal moves
+                    # the player will perform the same as ExploringPlayer
                     explore = ExploringPlayer(self._depth)
                     return explore.make_move(game, previous_move)
             else:  # if playing as black
+                # similar to the previous case
                 maximum = max(black_win)
                 if maximum > EPSILON:
                     maximum_index = black_win.index(maximum)
@@ -466,6 +499,8 @@ class Human(Player):
         """Reload the tree from the xml file as self._game_tree."""
         return  # Does nothing
 
+
+# TODO: Add more explanations to AIBlack methods
 
 class AIBlack(Player):
     """An AI chess player that always play as Black."""
