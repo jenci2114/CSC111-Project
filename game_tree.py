@@ -104,6 +104,10 @@ class GameTree:
         self._subtrees.append(subtree)
         self._update_win_probabilities()
 
+    def clean_subtrees(self) -> None:
+        """Clean all the subtrees of the tree."""
+        self._subtrees = []
+
     def __str__(self) -> str:
         """Return a string representation of this tree.
         """
@@ -249,13 +253,13 @@ class GameTree:
                                      if subtree.red_win_probability != -1]
             subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees
                                        if subtree.black_win_probability != -1]
-            if self.is_red_move:
+            if self.is_red_move and subtrees_win_prob_red != []:
                 self.red_win_probability = max(subtrees_win_prob_red)
                 # Averages the top ESTIMATION of the opponent's moves
                 half_len = math.ceil(len(subtrees_win_prob_black) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_black, reverse=True)[:half_len]
                 self.black_win_probability = sum(top_chances) / half_len
-            else:
+            elif not self.is_red_move and subtrees_win_prob_black != []:
                 self.black_win_probability = max(subtrees_win_prob_black)
                 half_len = math.ceil(len(subtrees_win_prob_red) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
