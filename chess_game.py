@@ -662,39 +662,39 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
 
         # Cannon in the middle check
         if pos[1] == 4 and pos[0] in {3, 4, 5} and piece == _Piece('c', True):
-            points_so_far += 80
+            points_so_far += 60
         elif pos[1] == 4 and pos[0] in {4, 5, 6} and piece == _Piece('c', False):
-            points_so_far -= 80
+            points_so_far -= 60
 
         # Cannon in the back check
         if pos[0] == 0 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', True):
-            points_so_far += 50
+            points_so_far += 30
         elif pos[0] == 9 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', False):
-            points_so_far -= 50
+            points_so_far -= 30
 
         # Head pawn existence check
         if pos[1] == 4 and pos[0] == 6 and piece == _Piece('p', True):
-            points_so_far += 20
+            points_so_far += 10
         elif pos[1] == 4 and pos[0] == 3 and piece == _Piece('p', False):
-            points_so_far -= 20
+            points_so_far -= 10
 
         # Horse in the barn check
         if pos[0] == 1 and pos[1] in {2, 6} and piece == _Piece('h', True):
-            points_so_far += 100
+            points_so_far += 70
         elif pos[0] == 8 and pos[1] in {2, 6} and piece == _Piece('h', False):
-            points_so_far -= 100
+            points_so_far -= 70
 
         # Horse in the palace check
         if pos[0] == 2 and pos[1] in {3, 5} and piece == _Piece('h', True):
-            points_so_far += 50
+            points_so_far += 30
         elif pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('h', False):
-            points_so_far -= 50
+            points_so_far -= 30
 
         # Elephant on guard check
         if pos[0] == 7 and pos[1] == 4 and piece == _Piece('e', True):
-            points_so_far += 30
+            points_so_far += 20
         elif pos[0] == 2 and pos[1] == 4 and piece == _Piece('e', False):
-            points_so_far -= 30
+            points_so_far -= 20
 
     return points_so_far
 
