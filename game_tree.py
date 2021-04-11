@@ -39,11 +39,9 @@ class GameTree:
         - is_red_move: True if Red is to make the next move after this, False otherwise
         - relative_points: the points of Red minus the points of Black
         - red_win_probability: the probability that Red will win from the current state
-                               of the game. red_win_probability == -1 if it will not be
-                               counted when we update win probability.
+                               of the game.
         - black_win_probability: the probability that Black will win from the current state
-                                 of the game. black_win_probability == -1 if it will not be
-                               counted when we update win probability.
+                                 of the game.
 
     Note: red_win_probability is calculated from Red's view and black_win_probability
     is calculated from Black's view. See more explanations in self._update_win_probabilities.
@@ -51,8 +49,8 @@ class GameTree:
     Representation Invariants:
         - self.move == GAME_START_MOVE or self.move is a valid chess move
         - self.move != GAME_START_MOVE or self.is_red_move == True
-        - 0 <= red_win_probability <= 1 or red_win_probability = -1
-        - 0 <= black_win_probability <= 1 or black_win_probability = -1
+        - 0 <= red_win_probability <= 1
+        - 0 <= black_win_probability <= 1
     """
     move: str
     is_red_move: bool
@@ -249,22 +247,30 @@ class GameTree:
             return
         else:
             # lists of win probabilities corresponding to subtrees
-            subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees
-                                     if subtree.red_win_probability != -1]
-            subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees
-                                       if subtree.black_win_probability != -1]
-            if self.is_red_move and subtrees_win_prob_red != []:
+            subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees]
+            subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees]
+            if self.is_red_move:
                 self.red_win_probability = max(subtrees_win_prob_red)
                 # Averages the top ESTIMATION of the opponent's moves
                 half_len = math.ceil(len(subtrees_win_prob_black) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_black, reverse=True)[:half_len]
                 self.black_win_probability = sum(top_chances) / half_len
-            elif not self.is_red_move and subtrees_win_prob_black != []:
+            else:
                 self.black_win_probability = max(subtrees_win_prob_black)
                 half_len = math.ceil(len(subtrees_win_prob_red) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
                 self.red_win_probability = sum(top_chances) / half_len
         return None
+
+    def purge(self) -> None:
+        """Remove duplicate subtrees (if there is any)."""
+        moves_so_far = []
+        for subtree in self._subtrees:
+            if subtree.move in moves_so_far:  # this is a duplicate
+                self._subtrees.remove(subtree)
+                self.find_subtree_by_move(subtree.move).merge_with(subtree)
+            else:
+                moves_so_far.append(subtree.move)
 
     def reevaluate(self) -> None:
         """Re-evaluate the relative points and win-probabilities of this tree.
@@ -274,6 +280,7 @@ class GameTree:
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
         """
+        self.purge()
         if self._subtrees == []:  # Base case, self is a leaf
             return  # we already have the points and win possibilities
         else:  # Recursive step
@@ -289,8 +296,8 @@ class GameTree:
                         subtree.relative_points = min(s.relative_points for s in subtree._subtrees)
 
     def merge_with(self, other_tree: GameTree) -> None:
-        """Merge the current tree with other_tree. Note that this is a *mutating* method and that
-        the original tree will be replaced by the merged tree.
+        """Recursively merge the current tree with other_tree. Note that this is a
+        *mutating* method and that the original tree will be replaced by the merged tree.
 
         Preconditions:
             - other_tree stores valid Chinese chess moves.
@@ -326,6 +333,7 @@ class GameTree:
                 z -> Red's move
         <BLANKLINE>
         """
+        assert self.move == other_tree.move
         subtrees_moves = [subtree.move for subtree in self._subtrees]
         for subtree in other_tree.get_subtrees():
             if subtree.move in subtrees_moves:
@@ -333,7 +341,8 @@ class GameTree:
                 self._subtrees[index].merge_with(subtree)
             else:
                 self.add_subtree(subtree)
-                self._update_win_probabilities()
+
+        self.reevaluate()
 
 
 def load_game_tree(games_file: str) -> GameTree:
