@@ -396,11 +396,11 @@ def load_game_tree(games_file: str) -> GameTree:
             board = new_game.get_board()
             points_so_far.append(chess_game.calculate_absolute_points(board))
 
-            if len(sequence_so_far) % 2 == 1:
-                # Red is the winner since Black did not move after Red made a move
-                tree.insert_move_sequence(sequence_so_far, points_so_far, red_win_probability=1)
-            else:  # Black is the winner
-                tree.insert_move_sequence(sequence_so_far, points_so_far, black_win_probability=1)
+        if len(sequence_so_far) % 2 == 1:
+            # Red is the winner since Black did not move after Red made a move
+            tree.insert_move_sequence(sequence_so_far, points_so_far, red_win_probability=1)
+        else:  # Black is the winner
+            tree.insert_move_sequence(sequence_so_far, points_so_far, black_win_probability=1)
 
     return tree
 
