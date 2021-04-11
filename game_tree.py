@@ -21,7 +21,7 @@ import xml.etree.cElementTree as ET
 import math
 
 import chess_game
-from chess_game import ChessGame, calculate_absolute_points
+from chess_game import ChessGame
 
 GAME_START_MOVE = '*'
 ESTIMATION = 0.8
@@ -39,9 +39,11 @@ class GameTree:
         - is_red_move: True if Red is to make the next move after this, False otherwise
         - relative_points: the points of Red minus the points of Black
         - red_win_probability: the probability that Red will win from the current state
-                               of the game
+                               of the game. red_win_probability == -1 if it will not be
+                               counted when we update win probability.
         - black_win_probability: the probability that Black will win from the current state
-                                 of the game
+                                 of the game. black_win_probability == -1 if it will not be
+                               counted when we update win probability.
 
     Note: red_win_probability is calculated from Red's view and black_win_probability
     is calculated from Black's view. See more explanations in self._update_win_probabilities.
@@ -49,7 +51,8 @@ class GameTree:
     Representation Invariants:
         - self.move == GAME_START_MOVE or self.move is a valid chess move
         - self.move != GAME_START_MOVE or self.is_red_move == True
-        - 0 <= white_red_probability <= 1
+        - 0 <= red_win_probability <= 1 or red_win_probability = -1
+        - 0 <= black_win_probability <= 1 or black_win_probability = -1
     """
     move: str
     is_red_move: bool
@@ -242,8 +245,10 @@ class GameTree:
             return
         else:
             # lists of win probabilities corresponding to subtrees
-            subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees]
-            subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees]
+            subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees
+                                     if subtree.red_win_probability != -1]
+            subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees
+                                       if subtree.black_win_probability != -1]
             if self.is_red_move:
                 self.red_win_probability = max(subtrees_win_prob_red)
                 # Averages the top ESTIMATION of the opponent's moves
@@ -285,8 +290,45 @@ class GameTree:
 
         Preconditions:
             - other_tree stores valid Chinese chess moves.
+            - other_tree has the same parents and root with self
+
+        >>> tree1 = GameTree()
+        >>> tree1.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
+        >>> print(tree1)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+              c -> Black's move
+                d -> Red's move
+        <BLANKLINE>
+        >>> tree2 = GameTree()
+        >>> tree2.insert_move_sequence(['a', 'x', 'y', 'z'], [1, 5, 6, 7])
+        >>> print(tree2)
+        * -> Red's move
+          a -> Black's move
+            x -> Red's move
+              y -> Black's move
+                z -> Red's move
+        <BLANKLINE>
+        >>> tree1.merge_with(tree2)
+        >>> print(tree1)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+              c -> Black's move
+                d -> Red's move
+            x -> Red's move
+              y -> Black's move
+                z -> Red's move
+        <BLANKLINE>
         """
-        # TODO: implement this method
+        subtrees_moves = [subtree.move for subtree in self._subtrees]
+        for subtree in other_tree.get_subtrees():
+            if subtree.move in subtrees_moves:
+                index = subtrees_moves.index(subtree.move)
+                self._subtrees[index].merge_with(subtree)
+            else:
+                self.add_subtree(subtree)
 
 
 def load_game_tree(games_file: str) -> GameTree:
