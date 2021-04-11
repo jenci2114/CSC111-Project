@@ -1,8 +1,20 @@
-"""..."""
+"""CSC111 Final Project: AI Player in Chinese Chess
+
+Module Description
+===============================
+
+This Python module contains functions to run games.
+
+Copyright and Usage Information
+===============================
+
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+"""
 
 from __future__ import annotations
 from chess_game import ChessGame
-from player import Player, RandomTreePlayer, GreedyTreePlayer, LearningPlayer
+from player import Player, RandomTreePlayer, GreedyTreePlayer, ExploringPlayer, \
+    LearningPlayer, Human
 import game_tree
 
 import copy
@@ -59,4 +71,5 @@ def run_game(red: Player, black: Player, visualize: bool = False) -> tuple[str, 
 
 
 if __name__ == '__main__':
-    run_game(LearningPlayer(4, 'data/tree.xml'), LearningPlayer(4, 'data/tree.xml'), True)
+    # run_game(GreedyTreePlayer('data/tree.xml'), ExploringPlayer(4), True)
+    run_game(LearningPlayer(4, 'data/tree.xml'), Human(), True)
