@@ -203,7 +203,8 @@ class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
      and find a locally optimal move.
 
-     TODO: If there is more than one optimal move, then ....
+     If there is more than one optimal move, then randomly choose a move with the highest
+     relative point.
 
      Note: This player does not need an existing tree to select a moves from.
      Instead, it will explore all recent moves and choose a locally optimal.
@@ -235,7 +236,8 @@ class ExploringPlayer(Player):
         if previous_move is None:
             pass
         else:
-            self._game_tree = GameTree(previous_move, game.is_red_move())
+            self._game_tree = GameTree(previous_move, game.is_red_move(), red_win_probability=-1,
+                                       black_win_probability=-1)
 
         # Non-multiprocessing version
         # best_score = self._alpha_beta(game, self._game_tree, self._depth, -1000000, 1000000)
@@ -282,7 +284,7 @@ class ExploringPlayer(Player):
         if game.is_red_move():
             value = -1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, False)
+                subtree = GameTree(move, False, red_win_probability=-1, black_win_probability=-1)
                 game_after_move = game.copy_and_make_move(move)
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -296,7 +298,7 @@ class ExploringPlayer(Player):
         else:  # Black's move
             value = 1000000
             for move in game.get_valid_moves():
-                subtree = GameTree(move, True)
+                subtree = GameTree(move, True, red_win_probability=-1, black_win_probability=-1)
                 game_after_move = game.copy_and_make_move(move)
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
@@ -395,6 +397,12 @@ class ExploringPlayer(Player):
         """Return self._game_tree."""
         return self._game_tree
 
+    def get_two_depth_tree(self) -> GameTree:
+        """Return self._game_tree with only one depth of subtrees."""
+        for subtree in self._game_tree.get_subtrees():
+            subtree.clean_subtrees()
+        return self._game_tree
+
 
 class LearningPlayer(Player):
     """A Chinese Chess player that can play based on a game tree and also explore new moves.
@@ -431,16 +439,16 @@ class LearningPlayer(Player):
 
         Preconditions:
             - There is at least one valid move for the given game
+            - self._game_tree is not None
         """
-        if self._game_tree is not None and previous_move is not None:
+        if previous_move is not None:
             # update the game tree with the previous move
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
             # no branches available so the player will explore new moves
             # then the player will perform the same as ExploringPlayer
-            explore = ExploringPlayer(self._depth)
-            return explore.make_move(game, previous_move)
+            return self._change_to_explore(game, previous_move)
         else:  # check the win probability
             if self._game_tree.is_red_move:
                 if self._game_tree.red_win_probability > EPSILON:
@@ -458,8 +466,7 @@ class LearningPlayer(Player):
                 else:  # self._game_tree.red_win_probability <= EPSILON
                     # the player needs to explore locally optimal moves
                     # the player will perform the same as ExploringPlayer
-                    explore = ExploringPlayer(self._depth)
-                    return explore.make_move(game, previous_move)
+                    return self._change_to_explore(game, previous_move)
             else:  # if playing as black
                 # similar to the previous case
                 if self._game_tree.black_win_probability > EPSILON:
@@ -471,8 +478,21 @@ class LearningPlayer(Player):
                     self._game_tree = max_subtree
                     return self._game_tree.move
                 else:
-                    explore = ExploringPlayer(self._depth)
-                    return explore.make_move(game, previous_move)
+                    return self._change_to_explore(game, previous_move)
+
+    def _change_to_explore(self, game: ChessGame, previous_move: Optional[str]) -> str:
+        """A helper function for self.make_move, which is called when the player will
+        perform the same as ExploringPlayer.
+
+        Note: The depth for ExploringPlayer is the same as self._depth.
+        """
+        explore = ExploringPlayer(self._depth)
+        move = explore.make_move(game, previous_move)
+        if self._game_tree is None:
+            self._game_tree = explore.get_two_depth_tree()
+        else:
+            self._game_tree.merge_with(explore.get_two_depth_tree())
+        return move
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
@@ -480,6 +500,10 @@ class LearningPlayer(Player):
             self._game_tree = xml_to_tree(self._xml_file)
         except FileNotFoundError:
             self._game_tree = GameTree()
+
+    def get_tree(self) -> GameTree:
+        """Return self._game_tree."""
+        return self._game_tree
 
 
 class Human(Player):
@@ -569,7 +593,6 @@ class AIBlack(Player):
             self._game_tree = xml_to_tree(self._xml_file)
         except FileNotFoundError:
             self._game_tree = None
-
 
 if __name__ == '__main__':
     # To avoid RecursionError
