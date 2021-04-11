@@ -1,4 +1,17 @@
-"""Game Tree"""
+"""CSC111 Final Project: AI Player in Chinese Chess
+
+Module Description
+===============================
+
+This Python module contains
+1. GameTree class
+2. functions to read csv and xml files, build game trees and store game trees
+
+Copyright and Usage Information
+===============================
+
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+"""
 
 
 from __future__ import annotations
@@ -29,6 +42,9 @@ class GameTree:
                                of the game
         - black_win_probability: the probability that Black will win from the current state
                                  of the game
+
+    Note: red_win_probability is calculated from Red's view and black_win_probability
+    is calculated from Black's view. See more explanations in self._update_win_probabilities.
 
     Representation Invariants:
         - self.move == GAME_START_MOVE or self.move is a valid chess move
@@ -113,11 +129,20 @@ class GameTree:
                              black_win_probability: float = 0.0) -> None:
         """Insert the given sequence of moves into this tree.
 
+        Parameters:
+            - moves: a list of moves in a game, with several red-black turns
+            - points: a lisyt of the relative points of the game, corresponding to the games
+                      after each move in moves
+
         The inserted moves form a chain of descendants, where:
             - moves[0] is a child of this tree's root
             - moves[1] is a child of moves[0]
             - moves[2] is a child of moves[1]
             - etc.
+
+        Precondictions:
+            - len(moves) == len(points)
+            - moves represents a all moves in a complete game
 
         >>> gt = GameTree()
         >>> gt.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
@@ -144,27 +169,36 @@ class GameTree:
 
     def insert_move_index(self, curr_index: int, moves: list[str], points: list[int],
                           red_win_probability: float, black_win_probability: float) -> None:
-        """A help method for insert_move_sequence."""
-        if curr_index == len(moves):
+        """A help method for insert_move_sequence.
+
+        Assume there is no draw and the last person to make a move in moves is the winner.
+
+        Preconditions:
+            - curr_index <= len(moves)
+        """
+        if curr_index == len(moves):  # base case
             return
         else:
             curr_move = moves[curr_index]
             relative_point = points[curr_index]
             for subtree in self._subtrees:
                 if subtree.move == curr_move:
+                    # curr_move exists in subtrees, check the next move in moves
                     subtree.insert_move_index(curr_index + 1, moves, points,
                                               red_win_probability, black_win_probability)
+                    # trees may be updated after we call insert_move_index method
+                    # so we need to update win probability
                     self._update_win_probabilities()
                     # an early return
                     return
 
-            # there is no early return after the for loop,
-            # which means we need to create a new subtree
-            if curr_index == len(moves) - 1:  # this is the last move
+            # there is no early return after the for loop and we need to create a new subtree
+            if curr_index == len(moves) - 1:
+                # this is the last move and we can get the winner
                 if len(moves) % 2 == 1:
                     # Red is the winner since Black did not move after Red made a move
                     red_win_probability = 1
-                else:
+                else:  # Black is the winner
                     black_win_probability = 1
 
             if self.is_red_move:
@@ -181,21 +215,46 @@ class GameTree:
                                           relative_points=relative_point,
                                           red_win_probability=red_win_probability,
                                           black_win_probability=black_win_probability))
-            # recurse for the next move in moves
+            # recurse on the next move in moves
             self._subtrees[-1].insert_move_index(curr_index + 1, moves, points,
                                                  red_win_probability, black_win_probability)
+            # trees may be updated after we call insert_move_index method
             self._update_win_probabilities()
 
     def _update_win_probabilities(self) -> None:
-        """Recalculate the red and black win probabilities of this tree."""
-        if self._subtrees == []:
+        """Update the red and black win probabilities of this tree.
+
+        self.red_win_probability is calculated from Red's view, which is defined as:
+            - if self is a leaf, don't change the red win probability
+              (leave the current value alone)
+            - if self is not a leaf and self.is_red_move is True, the red win probability
+              is equal to the MAXIMUM of the red win probabilities of its subtrees
+            - if self is not a leaf and self.is_red_move is False, the red win probability
+              is equal to the AVERAGE of the top ESTIMATION red win probabilities of its subtrees
+
+        self.black_win_probability is calculated from Black's view, which is defined as:
+            - if self is a leaf, don't change the red win probability
+              (leave the current value alone)
+            - if self is not a leaf and self.is_red_move is False, the black win probability
+              is equal to the MAXIMUM of the black win probabilities of its subtrees
+            - if self is not a leaf and self.is_red_move is Ture, the black win probability
+              is equal to the AVERAGE of the top ESTIMATION black win probabilities of its subtrees
+
+        Note: ESTIMATION is a parameter representing how the player thinks of the opponent.
+              For example, ESTIMATION of 0.5 means the player thinks the opponent will choose
+              moves with top 50% win probability. The smaller ESTIMATION is, the stronger the
+              player considers the opponent as.
+
+        """
+        if self._subtrees == []:  # this is a leaf
             return
         else:
+            # lists of win probabilities corresponding to subtrees
             subtrees_win_prob_red = [subtree.red_win_probability for subtree in self._subtrees]
             subtrees_win_prob_black = [subtree.black_win_probability for subtree in self._subtrees]
             if self.is_red_move:
                 self.red_win_probability = max(subtrees_win_prob_red)
-                # Averages the top 50% of the opponent's moves
+                # Averages the top ESTIMATION of the opponent's moves
                 half_len = math.ceil(len(subtrees_win_prob_black) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_black, reverse=True)[:half_len]
                 self.black_win_probability = sum(top_chances) / half_len
@@ -290,7 +349,7 @@ def load_game_tree(games_file: str) -> GameTree:
     for game_id in games:
         # game is a list consisting of many lists, with each list representing a turn
         game = games[game_id]
-        new_game = ChessGame()
+        new_game = ChessGame()  # simulate a new game to calculate relative points
         sequence_so_far = []  # collect the red-black turn of game
         points_so_far = []  # the relative point corresponding to sequence_so_far
 
@@ -303,7 +362,6 @@ def load_game_tree(games_file: str) -> GameTree:
 
         tree.insert_move_sequence(sequence_so_far, points_so_far)
 
-    # tree.reevaluate()
     return tree
 
 
