@@ -442,30 +442,31 @@ class LearningPlayer(Player):
             explore = ExploringPlayer(self._depth)
             return explore.make_move(game, previous_move)
         else:  # check the win probability
-            subtrees = self._game_tree.get_subtrees()
-            # lists of win probabilities corresponding to subtrees
-            subtrees_win_prob_red = [sub.red_win_probability for sub in subtrees]
-            subtrees_win_prob_black = [sub.black_win_probability for sub in subtrees]
             if self._game_tree.is_red_move:
-                maximum = max(subtrees_win_prob_red)
-                if maximum > EPSILON:
-                    # the best move reaches our expectation and
+                if self._game_tree.red_win_probability > EPSILON:
+                    # the best move reaches our expectation and thus
                     # the player does not need to explore a new move
-                    maximum_index = subtrees_win_prob_red.index(maximum)
+                    # find the best move in subtrees
+                    subtrees = self._game_tree.get_subtrees()
+                    # list of red win probabilities corresponding to subtrees
+                    subtrees_win_prob_red = [sub.red_win_probability for sub in subtrees]
+                    maximum_index = subtrees_win_prob_red.index(self._game_tree.red_win_probability)
                     max_subtree = subtrees[maximum_index]
                     # update the game tree
                     self._game_tree = max_subtree
                     return self._game_tree.move
-                else:  # maximum <= EPSILON
+                else:  # self._game_tree.red_win_probability <= EPSILON
                     # the player needs to explore locally optimal moves
                     # the player will perform the same as ExploringPlayer
                     explore = ExploringPlayer(self._depth)
                     return explore.make_move(game, previous_move)
             else:  # if playing as black
                 # similar to the previous case
-                maximum = max(subtrees_win_prob_black)
-                if maximum > EPSILON:
-                    maximum_index = subtrees_win_prob_black.index(maximum)
+                if self._game_tree.black_win_probability > EPSILON:
+                    subtrees = self._game_tree.get_subtrees()
+                    subtrees_win_prob_black = [sub.black_win_probability for sub in subtrees]
+                    maximum_index = subtrees_win_prob_black.index(
+                        self._game_tree.black_win_probability)
                     max_subtree = subtrees[maximum_index]
                     self._game_tree = max_subtree
                     return self._game_tree.move
