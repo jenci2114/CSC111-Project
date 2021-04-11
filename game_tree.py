@@ -133,6 +133,8 @@ class GameTree:
             - moves: a list of moves in a game, with several red-black turns
             - points: a lisyt of the relative points of the game, corresponding to the games
                       after each move in moves
+            - update_win_probability: True if we need to update the win probability of the tree
+                                      after inserting the move sequence
 
         The inserted moves form a chain of descendants, where:
             - moves[0] is a child of this tree's root
@@ -168,10 +170,8 @@ class GameTree:
         self.insert_move_index(0, moves, points, red_win_probability, black_win_probability)
 
     def insert_move_index(self, curr_index: int, moves: list[str], points: list[int],
-                          red_win_probability: float, black_win_probability: float) -> None:
+                          red_win_probability: float, black_win_probability: float,) -> None:
         """A help method for insert_move_sequence.
-
-        Assume there is no draw and the last person to make a move in moves is the winner.
 
         Preconditions:
             - curr_index <= len(moves)
@@ -193,14 +193,6 @@ class GameTree:
                     return
 
             # there is no early return after the for loop and we need to create a new subtree
-            if curr_index == len(moves) - 1:
-                # this is the last move and we can get the winner
-                if len(moves) % 2 == 1:
-                    # Red is the winner since Black did not move after Red made a move
-                    red_win_probability = 1
-                else:  # Black is the winner
-                    black_win_probability = 1
-
             if self.is_red_move:
                 # should be Black
                 self.add_subtree(GameTree(move=curr_move,
@@ -309,6 +301,8 @@ def load_game_tree(games_file: str) -> GameTree:
     57380690,2,black,c8.6
     57380690,3,black,h8+7
 
+    Assume there is no draw and the last person to make a move in moves is the winner.
+
     Preconditions:
         - games_file refers to a csv file in the same format as the small sample.
 
@@ -360,7 +354,11 @@ def load_game_tree(games_file: str) -> GameTree:
             board = new_game.get_board()
             points_so_far.append(chess_game.calculate_absolute_points(board))
 
-        tree.insert_move_sequence(sequence_so_far, points_so_far)
+            if len(sequence_so_far) % 2 == 1:
+                # Red is the winner since Black did not move after Red made a move
+                tree.insert_move_sequence(sequence_so_far, points_so_far, red_win_probability=1)
+            else:  # Black is the winner
+                tree.insert_move_sequence(sequence_so_far, points_so_far, black_win_probability=1)
 
     return tree
 
