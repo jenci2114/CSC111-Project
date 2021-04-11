@@ -329,6 +329,7 @@ class GameTree:
                 self._subtrees[index].merge_with(subtree)
             else:
                 self.add_subtree(subtree)
+                self._update_win_probabilities()
 
 
 def load_game_tree(games_file: str) -> GameTree:
