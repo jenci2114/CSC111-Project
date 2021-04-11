@@ -8,7 +8,7 @@ import xml.etree.cElementTree as ET
 import math
 
 import chess_game
-from chess_game import ChessGame
+from chess_game import ChessGame, calculate_absolute_points
 
 GAME_START_MOVE = '*'
 ESTIMATION = 0.8
@@ -214,6 +214,27 @@ class GameTree:
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
         """
+        if self._subtrees == []:  # Base case, self is a leaf
+            return  # we already have the points and win possibilities
+        else:  # Recursive step
+            for subtree in self._subtrees:
+                subtree.reevaluate()
+
+                # At this point, all subtrees of the loop variable subtree is reevaluated.
+                if subtree._subtrees != []:  # not a leaf, then we calculate based on its subtrees
+                    subtree._update_win_probabilities()
+                    if subtree.is_red_move:
+                        subtree.relative_points = max(s.relative_points for s in subtree._subtrees)
+                    else:
+                        subtree.relative_points = min(s.relative_points for s in subtree._subtrees)
+
+    def merge_with(self, other_tree: GameTree) -> None:
+        """Merge the current tree with other_tree. Note that this is a *mutating* method and that
+        the original tree will be replaced by the merged tree.
+
+        Preconditions:
+            - other_tree stores valid Chinese chess moves.
+        """
         # TODO: implement this method
 
 
@@ -370,6 +391,6 @@ if __name__ == '__main__':
     #     'max-line-length': 100,
     #     'disable': ['E1136'],
     # })
-    t = load_game_tree('data/moves.csv')
-    print(t.red_win_probability)
-    print(t.black_win_probability)
+    # t = load_game_tree('data/moves.csv')
+    # print(t.red_win_probability)
+    # print(t.black_win_probability)
