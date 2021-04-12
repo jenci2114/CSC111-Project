@@ -13,14 +13,13 @@ This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci We
 
 from __future__ import annotations
 from chess_game import ChessGame
-from player import Player, RandomTreePlayer, GreedyTreePlayer, ExploringPlayer, \
-    LearningPlayer, Human
+import player
 import game_tree
 
 import copy
 
 
-def run_games(n: int, red: Player, black: Player, visualize: bool = False) -> None:
+def run_games(n: int, red: player.Player, black: player.Player, visualize: bool = False) -> None:
     """Run n games using the given Players.
 
     visualize: print the board after each move
@@ -44,7 +43,8 @@ def run_games(n: int, red: Player, black: Player, visualize: bool = False) -> No
         print(f'{outcome}: {stats[outcome]}/{n} ({100.0 * stats[outcome] / n:.2f}%)')
 
 
-def run_game(red: Player, black: Player, visualize: bool = False) -> tuple[str, list[str]]:
+def run_game(red: player.Player, black: player.Player, visualize: bool = False) \
+        -> tuple[str, list[str]]:
     """Run a Chinese Chess game between the two given players.
 
     Return the winner and list of moves made in the game.
@@ -70,6 +70,6 @@ def run_game(red: Player, black: Player, visualize: bool = False) -> tuple[str, 
     return game.get_winner(), move_sequence
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
     # run_game(GreedyTreePlayer('data/tree.xml'), ExploringPlayer(4), True)
-    run_game(LearningPlayer(4, 'data/tree.xml'), Human(), True)
+    # run_game(player.LearningPlayer(4, 'data/tree.xml'), player.Human(), True)
