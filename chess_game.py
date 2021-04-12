@@ -759,11 +759,35 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
         elif pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('h', False):
             points_so_far -= 30
 
-        # Elephant on guard check
+        # Elephant on-guard check
         if pos[0] == 7 and pos[1] == 4 and piece == _Piece('e', True):
             points_so_far += 20
         elif pos[0] == 2 and pos[1] == 4 and piece == _Piece('e', False):
             points_so_far -= 20
+
+        # Elephant off-guard penalty
+        if pos[0] == 7 and pos[1] in {0, 8} and piece == _Piece('e', True):
+            points_so_far -= 10
+        elif pos[0] == 2 and pos[1] in {0, 8} and piece == _Piece('e', False):
+            points_so_far += 10
+
+        # Assistant off-guard penalty
+        if pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('a', True):
+            points_so_far -= 10
+        elif pos[0] == 2 and pos[1] in {3, 5} and piece == _Piece('a', False):
+            points_so_far += 10
+
+        # King unprotected penalty
+        if pos[0] in {7, 8} and piece == _Piece('k', True):
+            points_so_far -= 10
+        elif pos[0] in {1, 2} and piece == _Piece('k', False):
+            points_so_far += 10
+
+        # Chariot stuck penalty
+        if pos[0] == 9 and pos[1] in {0, 8} and piece == _Piece('r', True):
+            points_so_far -= 10
+        elif pos[0] == 0 and pos[1] in {0, 8} and piece == _Piece('r', False):
+            points_so_far += 10
 
     return points_so_far
 

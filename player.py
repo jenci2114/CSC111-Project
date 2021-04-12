@@ -370,6 +370,14 @@ class ExploringPlayer(Player):
             self._game_tree.add_subtree(subtree)
             os.remove(f'temp/process{i}.xml')
 
+        print(f"Let's see which move is the dupe! {sorted([(s.move, s.relative_points) for s in self._game_tree.get_subtrees()])}")
+        moves_so_far = []
+        for sub in self._game_tree.get_subtrees():
+            if sub.move in moves_so_far:
+                print(f'Found the dupe! {sub.move}')
+            else:
+                moves_so_far.append(sub.move)
+
         if game.is_red_move():
             value = max(s.relative_points for s in self._game_tree.get_subtrees())
         else:
