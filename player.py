@@ -596,8 +596,8 @@ class AIBlack(Player):
             move = explorer.make_move(game, previous_move)
             new_subtree = explorer.get_tree()
             self._current_subtree.add_subtree(new_subtree)
-            self._current_subtree = self._current_subtree.find_subtree_by_move(new_subtree.move)
-
+            self._current_subtree = new_subtree
+            self._current_subtree = self._current_subtree.find_subtree_by_move(move)
             return move
         else:
             new_subtree = GameTree(previous_move, False)
@@ -621,8 +621,9 @@ class AIBlack(Player):
             chosen_subtree = random.choice(candidate_subtrees)
             self._game_tree = chosen_subtree
             self._current_subtree.add_subtree(new_subtree)
+            self._current_subtree = new_subtree
             self._current_subtree.add_subtree(chosen_subtree)
-            self._current_subtree = self._current_subtree.find_subtree_by_move(chosen_subtree.move)
+            self._current_subtree = chosen_subtree
             return self._game_tree.move
 
     def store_tree(self) -> None:
