@@ -103,8 +103,52 @@ class GameTree:
         self._update_win_probabilities()
 
     def clean_subtrees(self) -> None:
-        """Clean all the subtrees of the tree."""
+        """Clean all the subtrees of the tree.
+
+        >>> tree = GameTree()
+        >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
+        >>> print(tree)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+              c -> Black's move
+                d -> Red's move
+        <BLANKLINE>
+        >>> tree.clean_subtrees()
+        >>> print(tree)
+        * -> Red's move
+        <BLANKLINE>
+        """
         self._subtrees = []
+
+    def clean_depth_subtrees(self, depth: int) -> None:
+        """Clean all the subtrees after depth of depth.
+
+        Precondition:
+            - depth >= 2
+
+        >>> tree = GameTree()
+        >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
+        >>> print(tree)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+              c -> Black's move
+                d -> Red's move
+        <BLANKLINE>
+        >>> tree.clean_depth_subtrees(3)
+        >>> print(tree)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+        <BLANKLINE>
+        """
+        if depth == 2:
+            for subtree in self._subtrees:
+                subtree.clean_subtrees()
+        else:
+            for subtree in self._subtrees:
+                subtree.clean_depth_subtrees(depth - 1)
 
     def __str__(self) -> str:
         """Return a string representation of this tree.
@@ -151,17 +195,17 @@ class GameTree:
             - len(moves) == len(points)
             - moves represents a all moves in a complete game
 
-        >>> gt = GameTree()
-        >>> gt.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
-        >>> print(gt)
+        >>> tree = GameTree()
+        >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
+        >>> print(tree)
         * -> Red's move
           a -> Black's move
             b -> Red's move
               c -> Black's move
                 d -> Red's move
         <BLANKLINE>
-        >>> gt.insert_move_sequence(['a', 'b', 'x', 'y', 'z'], [1, 2, 3, 4, 5])
-        >>> print(gt)
+        >>> tree.insert_move_sequence(['a', 'b', 'x', 'y', 'z'], [1, 2, 3, 4, 5])
+        >>> print(tree)
         * -> Red's move
           a -> Black's move
             b -> Red's move
