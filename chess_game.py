@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from typing import Optional
+import statistics
 import copy
 
 
@@ -528,10 +529,69 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
     (7, 7)
     >>> _wxf_to_index(board, 'a4', False)
     (0, 3)
+    >>> g.make_move('p1+1')  # Want the situation where three pawns are aligned vertically
+    >>> g.make_move('p9+1')
+    >>> g.make_move('p1+1')
+    >>> g.make_move('p7+1')
+    >>> g.make_move('p3+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('p3+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('c2+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('c2+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('c2+1')
+    >>> g.make_move('p5+1')
+    >>> g.make_move('c2+1')
+    >>> g.make_move('p1+1')
+    >>> g.make_move('c2-1')
+    >>> g.make_move('p5.4')
+    >>> g.make_move('c2-1')
+    >>> g.make_move('p4.3')
+    >>> g.make_move('c2-1')
+    >>> g.make_move('p1.2')
+    >>> g.make_move('c2-1')
+    >>> g.make_move('p2.3')
+    >>> board = g.get_board()
+    >>> _wxf_to_index(board, '13', True)
+    (2, 6)
+    >>> _wxf_to_index(board, '23', True)
+    (3, 6)
+    >>> _wxf_to_index(board, '33', True)
+    (4, 6)
     """
     piece_lower = piece.lower()
     piece_type = piece_lower[0]
     location = piece_lower[1]
+
+    if piece_type.isdigit():
+        y, x = 0, 0
+
+        locations_so_far = []
+        # Search the board
+        while y <= 9:
+            if board[y][x] == _Piece('p', is_red):
+                locations_so_far.append((y, x))
+            x += 1
+            if x >= 9:
+                y += 1
+                x = 0
+
+        x_values = [l[1] for l in locations_so_far]
+        mode = statistics.mode(x_values)
+        aligned_pieces = [l for l in locations_so_far if l[1] == mode]
+        aligned_pieces.sort()
+
+        if len(aligned_pieces) < 3:
+            raise ValueError('Invalid piece')
+
+        if is_red:
+            return aligned_pieces[int(piece_type) - 1]
+        else:
+            return aligned_pieces[-int(piece_type)]
+
     if location in {'+', '-'}:
         y, x = 0, 0
 
@@ -557,7 +617,7 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
                 break
 
         if coord1 == () and coord2 == ():
-            raise ValueError
+            raise ValueError('Invalid piece')
 
         if (is_red and location == '+') or (not is_red and location == '-'):
             return coord1
@@ -577,7 +637,7 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
         if y > 9:
             print_board(board)
             print(piece)
-            raise ValueError
+            raise ValueError('Invalid piece')
         else:
             return (y, x)
 
@@ -601,21 +661,30 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
     type = piece.kind
     x = pos[1]
 
-    # Search if another piece is present in the column
+    # Search for all pieces present in the column
+    pieces = []
     y = 0
-    while y <= 9 and (board[y][x] != _Piece(type, is_red) or y == pos[0]):
+    while y <= 9:
+        if board[y][x] == _Piece(type, is_red):
+            pieces.append((y, x))
         y += 1
 
-    if y > 9:
+    if len(pieces) == 1:
         if is_red:
             return type + str(9 - x)
         else:  # not is_red
             return type + str(x + 1)
-    else:
-        if (is_red and pos[0] > y) or (not is_red and pos[0] < y):
+    elif len(pieces) == 2:
+        if (is_red and pieces.index((pos[0], pos[1])) == 1) \
+                or (not is_red and pieces.index((pos[0], pos[1])) == 0):
             return type + '-'
         else:
             return type + '+'
+    else:
+        if is_red:
+            return str(pieces.index((pos[0], pos[1])) + 1) + str(9 - x)
+        else:  # not is_red
+            return str(len(pieces) - pieces.index((pos[0], pos[1]))) + str(x + 1)
 
 
 def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
