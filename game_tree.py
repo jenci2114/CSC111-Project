@@ -125,7 +125,7 @@ class GameTree:
         """Clean all the subtrees after depth of depth.
 
         Precondition:
-            - depth >= 2
+            - depth >= 1
 
         >>> tree = GameTree()
         >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
@@ -143,7 +143,9 @@ class GameTree:
             b -> Red's move
         <BLANKLINE>
         """
-        if depth == 2:
+        if depth == 1:
+            self.clean_subtrees()
+        elif depth == 2:
             for subtree in self._subtrees:
                 subtree.clean_subtrees()
         else:
