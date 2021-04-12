@@ -145,9 +145,6 @@ class GameTree:
         """
         if depth == 1:
             self.clean_subtrees()
-        elif depth == 2:
-            for subtree in self._subtrees:
-                subtree.clean_subtrees()
         else:
             for subtree in self._subtrees:
                 subtree.clean_depth_subtrees(depth - 1)
