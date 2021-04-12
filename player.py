@@ -657,10 +657,9 @@ def train_black_ai(file: str, depth: int, iterations: int) -> None:
         - depth > 0
         - iterations > 0
     """
-    ai_player = AIBlack(file, depth)
-    exploring_player = ExploringPlayer(3)
-
     for _ in range(iterations):
+        ai_player = AIBlack(file, depth)
+        exploring_player = ExploringPlayer(4)
         game_run.run_games(1, exploring_player, ai_player, True)
         ai_player.store_tree()
 
