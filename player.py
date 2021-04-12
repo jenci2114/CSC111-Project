@@ -13,8 +13,8 @@ This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci We
 """
 from __future__ import annotations
 from typing import Optional
-from chess_game import ChessGame, _Piece, calculate_absolute_points
-from game_tree import GameTree, load_game_tree, xml_to_tree, tree_to_xml
+from chess_game import ChessGame, calculate_absolute_points
+from game_tree import GameTree, xml_to_tree, tree_to_xml
 import game_run
 import multiprocessing
 import random
@@ -196,8 +196,6 @@ class GreedyTreePlayer(Player):
         except FileNotFoundError:
             self._game_tree = None
 
-# TODO: Add more explanations on alpha-beta algorithm
-
 
 class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
@@ -300,6 +298,9 @@ class ExploringPlayer(Player):
                 tree.red_win_probability = 0.0
                 tree.black_win_probability = 0.0
             value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
+            # if the game ends while there are still 'remaining' depths, add incentive
+            # for the player to win game quickly/add disincentive for player to prevent the
+            # other from winning quickly
             tree.relative_points = value
             return value
         elif depth == 0:
@@ -558,8 +559,6 @@ class Human(Player):
         """Reload the tree from the xml file as self._game_tree."""
         return  # Does nothing
 
-
-# TODO: Add more explanations to AIBlack methods
 
 class AIBlack(Player):
     """An AI chess player that always play as Black."""
