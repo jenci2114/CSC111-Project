@@ -33,7 +33,7 @@ def training_for_probability(tree_file: str, number: int, depth: int) -> None:
     """
     tree = game_tree.xml_to_tree(tree_file)
     for i in range(number):
-        print(i + 1)  # to trace how far it has trained
+        print(i + 1)  # to trace how many times it has trained
         game = ChessGame()
         red = LearningPlayer(depth, tree_file)
         black = LearningPlayer(depth, tree_file)
@@ -86,12 +86,7 @@ def training_for_points(xml_file: str, number: int, depth: int, turns: int) -> N
     tree = game_tree.xml_to_tree(xml_file)
     tree.clean_depth_subtrees(turns)
     for i in range(number):
-        print(i + 1)  # to trace how far it has trained
-
-        # exploring_tree is the whole tree generated in this game
-        exploring_tree = game_tree.GameTree()
-        # current_tree is used to trace the leaf corresponding to the latest move in exploring_tree
-        current_tree = exploring_tree
+        print(f'This is {i + 1} simulation')  # to trace how many times it has trained
 
         # simulate a game
         game = ChessGame()
@@ -106,25 +101,6 @@ def training_for_points(xml_file: str, number: int, depth: int, turns: int) -> N
             previous_move = current_player.make_move(game, previous_move)
             game.make_move(previous_move)
 
-            # If LearningPlayer did not call ExploringPlayer, its tree will update with
-            # next move. If LearningPlayer called ExploringPlayer, the root of its tree
-            # will be the previous move.
-            if current_tree.find_subtree_by_move(current_player.get_tree().move) is None:
-                # current_tree and current_player.get_tree() has the same root
-                current_tree.merge_with(current_player.get_tree())
-                # update current_tree to the subtree with previous_move
-                for subtree in current_tree.get_subtrees():
-                    if subtree.move == previous_move:
-                        current_tree = subtree
-                        break
-            else:
-                # update current_tree to the subtree with previous_move
-                for subtree in current_tree.get_subtrees():
-                    if subtree.move == previous_move:
-                        current_tree = subtree
-                        break
-                current_tree.merge_with(current_player.get_tree())
-
             # update current_player for the next turn
             if current_player is red:
                 current_player = black
@@ -133,7 +109,7 @@ def training_for_points(xml_file: str, number: int, depth: int, turns: int) -> N
             curr_turn += 1
             print(game)
 
-        tree.merge_with(exploring_tree)
+        tree.merge_with(current_tree)
 
     game_tree.tree_to_xml(tree, xml_file)
 
@@ -146,6 +122,8 @@ if __name__ == '__main__':
     # If this is your firs time run this file, uncomment line 131 to 134
     # training_tree = game_tree.load_game_tree('data/moves.csv')
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_prob.xml')
+
+    # training_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # training_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_points.xml')
 
@@ -160,4 +138,4 @@ if __name__ == '__main__':
     # Then, run the following block of code
     # # choose number of trainings, depth for LearningPlayer and
     # # the depth (turns) of the generated tree
-    training_for_points('data/tree_for_points.xml', number=10, depth=2, turns=15)
+    training_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
