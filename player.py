@@ -279,7 +279,7 @@ class ExploringPlayer(Player):
 
     def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int,
                     alpha: int, beta: int) -> int:
-        """The alpha-beta pruning algorithm that will be used when this player makes a move.
+        """The alpha-beta running algorithm that will be used when this player makes a move.
 
         Note: +- 1000000 will be used to represent +- infinity
 
@@ -294,12 +294,14 @@ class ExploringPlayer(Player):
             elif game.get_winner() == 'Black':
                 side = -1
                 tree.black_win_probability = 1.0
-                tree.red_win_probability = 0.0
+                tree.red_win_probability = 0.0   # minimax
             else:  # draw
                 side = 0
                 tree.red_win_probability = 0.0
                 tree.black_win_probability = 0.0
             value = calculate_absolute_points(game.get_board()) + depth * 5000 * side
+            # if the game ends within the given depth of rounds, 
+            # the absolute value of "value" will be very large (more than 5000)
             tree.relative_points = value
             return value
         elif depth == 0:
