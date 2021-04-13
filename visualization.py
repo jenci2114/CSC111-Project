@@ -2,7 +2,7 @@
 
 import pygame
 from chess_game import ChessGame, _index_to_wxf, _wxf_to_index, \
-    _get_index_movement, _get_wxf_movement
+    _get_index_movement, _get_wxf_movement, calculate_absolute_points
 from player import Player
 
 
@@ -65,6 +65,9 @@ class Game:
         global RED
         global BLUE
         global WHITE
+        global CHECK_SOUND
+        global MOVE_SOUND
+        global CAPTURE_SOUND
 
         # Load images
         BOARD_IMAGE = pygame.image.load('chessboard/board/004.jpg')
@@ -85,6 +88,15 @@ class Game:
         RED_CHARIOT = pygame.image.load('chessboard/piece/rr.png')
         POSSIBLE_MOVE_FRAME = pygame.image.load('chessboard/piece/mask.png')
         SELECTED_FRAME = pygame.image.load('chessboard/piece/mm.png')
+
+        # Load sound and music
+        CHECK_SOUND = pygame.mixer.Sound('chessboard/sound/check.wav')
+        MOVE_SOUND = pygame.mixer.Sound('chessboard/sound/move.wav')
+        CAPTURE_SOUND = pygame.mixer.Sound('chessboard/sound/capture.wav')
+
+        # Load the background music
+        pygame.mixer.music.load('chessboard/sound/background_music.mp3')
+        pygame.mixer.music.play(-1)
 
         PIECE_DICT = {('r', False): BLACK_CHARIOT, ('h', False): BLACK_HORSE,
                       ('e', False): BLACK_ELEPHANT, ('a', False): BLACK_ASSISTANT,
@@ -129,9 +141,14 @@ class Game:
                         self._ready_to_move = False
                         pygame.display.flip()
                     else:  # Make the move!
+                        MOVE_SOUND.play()
                         wxf_move = _get_wxf_movement(self._game.get_board(),
                                                      self._curr_coord, new_coordinate, True)
+                        point_before_move = calculate_absolute_points(self._game.get_board())
                         self._game.make_move(wxf_move)
+                        point_after_move = calculate_absolute_points(self._game.get_board())
+                        if abs(point_after_move - point_before_move) >= 100:
+                            CAPTURE_SOUND.play()
                         self._print_game()
 
                         # Mark where the piece was before the move
@@ -200,6 +217,7 @@ class Game:
             frame_coord = coordinate_to_pixel(coord)
             frame_rect = POSSIBLE_MOVE_FRAME.get_rect(center=frame_coord)
             self._screen.blit(POSSIBLE_MOVE_FRAME, frame_rect)
+        CHECK_SOUND.play()
 
         self._ready_to_move = True
 
@@ -282,10 +300,14 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     return y // 56, x // 56
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
+    import player
+    p = player.AIBlack('data/tree', 3)
+    g = Game(p)
+    g.run()
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
-
+    #
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
