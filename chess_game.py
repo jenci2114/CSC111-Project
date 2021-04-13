@@ -180,7 +180,7 @@ class ChessGame:
 
             kind, is_red = piece.kind, piece.is_red
 
-            if kind == 'r':
+            if kind == 'r':  # TODO: make each branch as helper
                 moves += self._find_moves_in_direction(board, pos, is_red, (1, 0))
                 moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0))
                 moves += self._find_moves_in_direction(board, pos, is_red, (0, 1))
