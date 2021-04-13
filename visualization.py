@@ -13,7 +13,7 @@ This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci We
 
 import pygame
 from chess_game import ChessGame, _index_to_wxf, _wxf_to_index, \
-    _get_index_movement, _get_wxf_movement, calculate_absolute_points
+    _get_index_movement, _get_wxf_movement, piece_count
 from player import Player
 
 
@@ -142,10 +142,10 @@ class Game:
                             IMAGE_DICT['move_sound'].play()
                         wxf_move = _get_wxf_movement(self._game.get_board(),
                                                      self._curr_coord, new_coordinate, True)
-                        point_before_move = calculate_absolute_points(self._game.get_board())
+                        pieces_before = piece_count(self._game.get_board())
                         self._game.make_move(wxf_move)
-                        point_after_move = calculate_absolute_points(self._game.get_board())
-                        if self.sfx and abs(point_after_move - point_before_move) >= 100:
+                        pieces_after = piece_count(self._game.get_board())
+                        if self.sfx and pieces_before != pieces_after:
                             IMAGE_DICT['capture_sound'].play()
                         self._print_game()
 
@@ -166,6 +166,11 @@ class Game:
                         opponent_piece_coord = _wxf_to_index(self._game.get_board(),
                                                              opponent_wxf_move[0:2], False)
                         self._game.make_move(opponent_wxf_move)
+                        if self.sfx:
+                            IMAGE_DICT['move_sound'].play()
+                        pieces_after_opponent = piece_count(self._game.get_board())
+                        if self.sfx and pieces_after != pieces_after_opponent:
+                            IMAGE_DICT['capture_sound'].play()
                         self._print_game()
 
                         # Mark where the piece was before the move

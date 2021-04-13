@@ -792,6 +792,20 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
     return points_so_far
 
 
+def piece_count(board: list[list[Optional[_Piece]]]) -> int:
+    """Return how many pieces there are on the board at the moment.
+
+    Preconditions:
+        - board is a list of list representing a valid Chinese Chess board
+    """
+    pieces_so_far = 0
+    for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:
+        if board[pos[0]][pos[1]] is not None:
+            pieces_so_far += 1
+
+    return pieces_so_far
+
+
 class _Piece:
     """Represents a single piece in Chinese Chess.
 
