@@ -67,9 +67,9 @@ def run_game(red: player.Player, black: player.Player, visualize: bool = False) 
     return game.get_winner(), move_sequence
 
 
-if __name__ == '__main__':
-    import python_ta.contracts
-    python_ta.contracts.check_all_contracts()
+# if __name__ == '__main__':
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
 
     # import python_ta
     # python_ta.check_all(config={
@@ -77,5 +77,3 @@ if __name__ == '__main__':
     #     'disable': ['E1136', 'E9998'],
     #     'extra-imports': ['chess_game', 'player']
     # })
-    # run_game(GreedyTreePlayer('data/tree.xml'), ExploringPlayer(4), True)
-    # run_game(player.LearningPlayer(4, 'data/tree.xml'), player.Human(), True)

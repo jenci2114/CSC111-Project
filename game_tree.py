@@ -149,6 +149,17 @@ class GameTree:
             for subtree in self._subtrees:
                 subtree.clean_depth_subtrees(depth - 1)
 
+    def get_height(self, curr_depth: int = 1) -> int:
+        """Return the height of this tree.
+
+        Preconditions:
+            - Must be a tree of depth at least 1
+        """
+        if self._subtrees == []:
+            return curr_depth
+        else:
+            return max(sub.get_height(curr_depth + 1) for sub in self._subtrees)
+
     def __str__(self) -> str:
         """Return a string representation of this tree.
         """
@@ -535,8 +546,8 @@ def _build_game_tree(move: ET.Element, tree: GameTree) -> None:
 
 
 if __name__ == '__main__':
-    import python_ta.contracts
-    python_ta.contracts.check_all_contracts()
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
 
     import doctest
     doctest.testmod()
