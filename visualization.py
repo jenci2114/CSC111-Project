@@ -1,4 +1,15 @@
-"""..."""
+"""CSC111 Final Project: AI Player in Chinese Chess
+
+Module Description
+===============================
+
+This Python module contains Game class and is used for interaction with human player.
+
+Copyright and Usage Information
+===============================
+
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+"""
 
 import pygame
 from chess_game import ChessGame, _index_to_wxf, _wxf_to_index, \
@@ -31,7 +42,8 @@ class Game:
         """Initialize the game."""
         pygame.init()
         self.opponent = player
-        self._screen = pygame.display.set_mode((560, 645))
+        # self._screen = pygame.display.set_mode((560, 645))
+        self._screen = pygame.display.set_mode((800, 645))
         self._game = ChessGame()
         self._curr_coord = ()
         self._ready_to_move = False
@@ -65,6 +77,7 @@ class Game:
         global RED
         global BLUE
         global WHITE
+        global BACKGROUND_COLOR
         global CHECK_SOUND
         global MOVE_SOUND
         global CAPTURE_SOUND
@@ -114,6 +127,8 @@ class Game:
         RED = (255, 0, 0)
         BLUE = (0, 0, 255)
         WHITE = (255, 255, 255)
+        BACKGROUND_COLOR = (181, 184, 191)
+        self._screen.fill(BACKGROUND_COLOR)
 
     def run(self) -> None:
         """Run the game."""
@@ -300,17 +315,13 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     return y // 56, x // 56
 
 
-if __name__ == '__main__':
-    import player
-    p = player.AIBlack('data/tree', 3)
-    g = Game(p)
-    g.run()
-    # import python_ta.contracts
-    # python_ta.contracts.check_all_contracts()
-    #
-    # import python_ta
-    # python_ta.check_all(config={
-    #     'max-line-length': 100,
-    #     'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
-    #     'extra-imports': ['chess_game', 'player', 'pygame']
-    # })
+# if __name__ == '__main__':
+#     import python_ta.contracts
+#     python_ta.contracts.check_all_contracts()
+#
+#     import python_ta
+#     python_ta.check_all(config={
+#         'max-line-length': 100,
+#         'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
+#         'extra-imports': ['chess_game', 'player', 'pygame']
+#     })
