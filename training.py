@@ -15,7 +15,7 @@ from chess_game import ChessGame
 import game_tree
 from player import LearningPlayer
 
-recording_rate = 0.5
+RECORDING_RATE = 0.5
 
 
 def training_for_probability(tree_file: str, number: int, depth: int) -> None:
@@ -138,4 +138,14 @@ if __name__ == '__main__':
     # Then, run the following block of code
     # # choose number of trainings, depth for LearningPlayer and
     # # the depth (turns) of the generated tree
-    training_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
+    # training_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
+
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 100,
+        'disable': ['E1136', 'E9997', 'E9998'],
+        'extra-imports': ['chess_game', 'game_tree', 'player']
+    })

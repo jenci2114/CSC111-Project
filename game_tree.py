@@ -303,7 +303,7 @@ class GameTree:
                 half_len = math.ceil(len(subtrees_win_prob_red) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
                 self.red_win_probability = sum(top_chances) / half_len
-        return None
+        return
 
     def purge(self) -> None:
         """Remove duplicate subtrees (if there is any)."""
@@ -377,7 +377,7 @@ class GameTree:
         <BLANKLINE>
         """
         assert self.move == other_tree.move
-        subtrees_moves = [subtree.move for subtree in self._subtrees]
+        subtrees_moves = [sub.move for sub in self._subtrees]
         for subtree in other_tree.get_subtrees():
             if subtree.move in subtrees_moves:
                 index = subtrees_moves.index(subtree.move)
@@ -535,8 +535,8 @@ def _build_game_tree(move: ET.Element, tree: GameTree) -> None:
 
 
 if __name__ == '__main__':
-    # import python_ta.contracts
-    # python_ta.contracts.check_all_contracts()
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
 
     import doctest
     doctest.testmod()
@@ -544,8 +544,6 @@ if __name__ == '__main__':
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
-    #     'disable': ['E1136'],
+    #     'disable': ['E1136', 'E9998', 'R0913', 'R1702'],
+    #     'extra-imports': ['csv', 'xml.etree.cElementTree', 'math', 'chess_game']
     # })
-    # t = load_game_tree('data/moves.csv')
-    # print(t.red_win_probability)
-    # print(t.black_win_probability)

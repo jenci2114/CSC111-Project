@@ -272,7 +272,7 @@ class ChessGame:
 
     def _find_moves_in_direction(self, board: list[list[Optional[_Piece]]],
                                  pos: tuple[int, int], is_red: bool, direction: tuple[int, int],
-                                 limit: int = None, capture: bool = None):
+                                 limit: int = None, capture: bool = None) -> list[str]:
         """Find valid moves moving in a given direction from a certain position.
 
         capture: True if must capture, False if must not capture, None otherwise.
@@ -658,28 +658,28 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
     if piece is None or piece.is_red != is_red:
         raise ValueError
 
-    type = piece.kind
+    piece_type = piece.kind
     x = pos[1]
 
     # Search for all pieces present in the column
     pieces = []
     y = 0
     while y <= 9:
-        if board[y][x] == _Piece(type, is_red):
+        if board[y][x] == _Piece(piece_type, is_red):
             pieces.append((y, x))
         y += 1
 
     if len(pieces) == 1:
         if is_red:
-            return type + str(9 - x)
+            return piece_type + str(9 - x)
         else:  # not is_red
-            return type + str(x + 1)
+            return piece_type + str(x + 1)
     elif len(pieces) == 2:
         if (is_red and pieces.index((pos[0], pos[1])) == 1) \
                 or (not is_red and pieces.index((pos[0], pos[1])) == 0):
-            return type + '-'
+            return piece_type + '-'
         else:
-            return type + '+'
+            return piece_type + '+'
     else:
         if is_red:
             return str(pieces.index((pos[0], pos[1])) + 1) + str(9 - x)
@@ -824,5 +824,18 @@ class _Piece:
 
 
 if __name__ == '__main__':
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
+
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 150,
+    #     # Some code here is copied from the Assignment 2 package, and we disabled all the
+    #     # errors present on the provided Assignment 2 package.
+    #     'disable': ['E9989', 'E1136', 'E9998', 'W1401', 'R1702',
+    #                 'R0912', 'R0913', 'R0914', 'R0915', 'R0201'],
+    #     'extra-imports': ['typing', 'statistics', 'copy']
+    # })
+
     import doctest
     doctest.testmod()

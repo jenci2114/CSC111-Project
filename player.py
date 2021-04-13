@@ -12,15 +12,14 @@ Copyright and Usage Information
 This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
 """
 from __future__ import annotations
-from typing import Optional
-from chess_game import ChessGame, calculate_absolute_points
-from game_tree import GameTree, xml_to_tree, tree_to_xml
-import game_run
 import multiprocessing
 import random
 import time
 import os
-
+from typing import Optional
+import game_run
+from chess_game import ChessGame, calculate_absolute_points
+from game_tree import GameTree, xml_to_tree, tree_to_xml
 
 PROCESSES = 9
 EPSILON = 0.2
@@ -73,128 +72,6 @@ class RandomPlayer(Player):
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
         return  # Does nothing
-
-
-class RandomTreePlayer(Player):
-    """A Chinese Chess player that chooses random moves based on a given game tree.
-
-    This player uses a game tree to make moves, descending into the tree as the game is played.
-    On its turn:
-
-        1. First it updates its game tree to its subtree corresponding to the move made by
-           its opponent. If no subtree is found, its game tree is set to None.
-        2. Then, if its game tree is not None, it picks its next move randomly from among
-           the subtrees of its game tree, and then reassigns its game tree to that subtree.
-           But if its game tree is None or has no subtrees, the player picks its next move randomly,
-           and then sets its game tree to None.
-    """
-
-    def __init__(self, xml_file: str = '') -> None:
-        """Initialize this player.
-
-        Preconditions:
-            - xml file contains a game tree at the initial state (root is '*')
-        """
-        self._xml_file = xml_file
-        self.reload_tree()
-
-    def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
-        """Make a move given the current game.
-
-        previous_move is the opponent player's most recent move, or None if no moves
-        have been made.
-
-        Preconditions:
-            - There is at least one valid move for the given game
-        """
-        if self._game_tree is not None and previous_move is not None:
-            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
-
-        if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no branches available so we search for possible moves and make a random move
-            possible_moves = game.get_valid_moves()
-            self._game_tree = None
-            return random.choice(possible_moves)
-        else:
-            subtrees = self._game_tree.get_subtrees()
-            self._game_tree = random.choice(subtrees)
-            return self._game_tree.move
-
-    def reload_tree(self) -> None:
-        """Reload the tree from the xml file as self._game_tree."""
-        try:
-            self._game_tree = xml_to_tree(self._xml_file)
-        except FileNotFoundError:
-            self._game_tree = None
-
-
-class GreedyTreePlayer(Player):
-    """A Chinese Chess player that plays using a game tree, choosing moves
-    based on win probability.
-
-    If the player is red, then it will choose a move in the subtrees
-    that has highest winning probability for red.
-
-    If the player is black, then it will choose a move in the subtrees
-    that has highest winning probability for black.
-
-    If there is no available moves in the subtrees, then the player will
-    randomly choose a valid move.
-    """
-
-    def __init__(self, xml_file: str) -> None:
-        """Initialize this player.
-
-        Preconditions:
-            - xml file contains a game tree at the initial state (root is '*')
-        """
-        self._xml_file = xml_file
-        self.reload_tree()
-
-    def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
-        """Make a move given the current game.
-
-        previous_move is the opponent player's most recent move, or None if no moves
-        have been made.
-
-        Preconditions:
-            - There is at least one valid move for the given game
-        """
-        if self._game_tree is not None and previous_move is not None:
-            self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
-
-        if self._game_tree is None or self._game_tree.get_subtrees() == []:
-            # no branches available so the player will choose a random move
-            possible_moves = game.get_valid_moves()
-            self._game_tree = None
-            return random.choice(possible_moves)
-        else:  # the player will choose the move with highest win probability
-            subtrees = self._game_tree.get_subtrees()
-            # lists of win probabilities corresponding to subtrees
-            subtrees_win_prob_red = [sub.red_win_probability for sub in subtrees]
-            subtrees_win_prob_black = [sub.black_win_probability for sub in subtrees]
-            if self._game_tree.is_red_move:
-                # the player will choose a move with highest winning probability for red
-                maximum = max(subtrees_win_prob_red)
-                maximum_index = subtrees_win_prob_red.index(maximum)
-                # find the subtree with the highest red win probability
-                max_subtree = subtrees[maximum_index]
-                self._game_tree = max_subtree
-            else:  # if playing as black
-                # similar to the previous case
-                maximum = max(subtrees_win_prob_black)
-                maximum_index = subtrees_win_prob_black.index(maximum)
-                max_subtree = subtrees[maximum_index]
-                self._game_tree = max_subtree
-
-            return self._game_tree.move
-
-    def reload_tree(self) -> None:
-        """Reload the tree from the xml file as self._game_tree."""
-        try:
-            self._game_tree = xml_to_tree(self._xml_file)
-        except FileNotFoundError:
-            self._game_tree = None
 
 
 class ExploringPlayer(Player):
@@ -573,7 +450,7 @@ class AIBlack(Player):
     _current_tree: GameTree
     _current_subtree: GameTree
 
-    def __init__(self, xml_file: str, depth: int):
+    def __init__(self, xml_file: str, depth: int) -> None:
         """Initialize this player.
 
         Preconditions:
@@ -636,6 +513,7 @@ class AIBlack(Player):
         self._game_tree.merge_with(self._current_tree)
         print('Storing tree...')
         tree_to_xml(self._game_tree, self._xml_file)
+        print('Success.')
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
@@ -665,12 +543,8 @@ def train_black_ai(file: str, depth: int, iterations: int) -> None:
 
 
 if __name__ == '__main__':
-    # To avoid RecursionError
-    import sys
-    sys.setrecursionlimit(10000)
-
-    # import python_ta.contracts
-    # python_ta.contracts.check_all_contracts()
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
 
     import doctest
     doctest.testmod()
@@ -678,5 +552,7 @@ if __name__ == '__main__':
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
-    #     'disable': ['E1136'],
+    #     'disable': ['E1136', 'E9994', 'E9998', 'R0913', 'R0914'],
+    #     'extra-imports': ['chess_game', 'game_tree', 'game_run', 'multiprocessing', 'random',
+    #                       'time', 'os']
     # })

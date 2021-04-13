@@ -14,9 +14,6 @@ This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci We
 from __future__ import annotations
 from chess_game import ChessGame
 import player
-import game_tree
-
-import copy
 
 
 def run_games(n: int, red: player.Player, black: player.Player, visualize: bool = False) -> None:
@@ -70,6 +67,15 @@ def run_game(red: player.Player, black: player.Player, visualize: bool = False) 
     return game.get_winner(), move_sequence
 
 
-# if __name__ == '__main__':
+if __name__ == '__main__':
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
+
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1136', 'E9998'],
+    #     'extra-imports': ['chess_game', 'player']
+    # })
     # run_game(GreedyTreePlayer('data/tree.xml'), ExploringPlayer(4), True)
     # run_game(player.LearningPlayer(4, 'data/tree.xml'), player.Human(), True)

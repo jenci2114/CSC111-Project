@@ -3,10 +3,7 @@
 import pygame
 from chess_game import ChessGame, _index_to_wxf, _wxf_to_index, \
     _get_index_movement, _get_wxf_movement
-from player import Player, RandomPlayer, AIBlack, ExploringPlayer
-
-# Initialize Pygame
-pygame.init()
+from player import Player
 
 
 class Game:
@@ -40,70 +37,71 @@ class Game:
         self._ready_to_move = False
         self._movement_indices = []
         self._game_ended = False
+        pygame.display.set_caption('Chinese Chess!!')
 
         # Make the below constants usable throughout all methods of this class
-        global board_image
-        global coord_image
-        global black_assistant
-        global black_elephant
-        global black_cannon
-        global black_king
-        global black_horse
-        global black_pawn
-        global black_chariot
-        global red_assistant
-        global red_elephant
-        global red_cannon
-        global red_king
-        global red_horse
-        global red_pawn
-        global red_chariot
-        global possible_move_frame
-        global selected_frame
-        global piece_dict
-        global font_bold
-        global font
-        global black
-        global red
-        global blue
-        global white
+        global BOARD_IMAGE
+        global COORD_IMAGE
+        global BLACK_ASSISTANT
+        global BLACK_ELEPHANT
+        global BLACK_CANNON
+        global BLACK_KING
+        global BLACK_HORSE
+        global BLACK_PAWN
+        global BLACK_CHARIOT
+        global RED_ASSISTANT
+        global RED_ELEPHANT
+        global RED_CANNON
+        global RED_KING
+        global RED_HORSE
+        global RED_PAWN
+        global RED_CHARIOT
+        global POSSIBLE_MOVE_FRAME
+        global SELECTED_FRAME
+        global PIECE_DICT
+        global FONT_BOLD
+        global FONT
+        global BLACK
+        global RED
+        global BLUE
+        global WHITE
 
         # Load images
-        board_image = pygame.image.load('chessboard/board/004.jpg')
-        coord_image = pygame.image.load('chessboard/board/xy2.png')
-        black_assistant = pygame.image.load('chessboard/piece/ba.png')
-        black_elephant = pygame.image.load('chessboard/piece/bb.png')
-        black_cannon = pygame.image.load('chessboard/piece/bc.png')
-        black_king = pygame.image.load('chessboard/piece/bk.png')
-        black_horse = pygame.image.load('chessboard/piece/bn.png')
-        black_pawn = pygame.image.load('chessboard/piece/bp.png')
-        black_chariot = pygame.image.load('chessboard/piece/br.png')
-        red_assistant = pygame.image.load('chessboard/piece/ra.png')
-        red_elephant = pygame.image.load('chessboard/piece/rb.png')
-        red_cannon = pygame.image.load('chessboard/piece/rc.png')
-        red_king = pygame.image.load('chessboard/piece/rk.png')
-        red_horse = pygame.image.load('chessboard/piece/rn.png')
-        red_pawn = pygame.image.load('chessboard/piece/rp.png')
-        red_chariot = pygame.image.load('chessboard/piece/rr.png')
-        possible_move_frame = pygame.image.load('chessboard/piece/mask.png')
-        selected_frame = pygame.image.load('chessboard/piece/mm.png')
+        BOARD_IMAGE = pygame.image.load('chessboard/board/004.jpg')
+        COORD_IMAGE = pygame.image.load('chessboard/board/xy2.png')
+        BLACK_ASSISTANT = pygame.image.load('chessboard/piece/ba.png')
+        BLACK_ELEPHANT = pygame.image.load('chessboard/piece/bb.png')
+        BLACK_CANNON = pygame.image.load('chessboard/piece/bc.png')
+        BLACK_KING = pygame.image.load('chessboard/piece/bk.png')
+        BLACK_HORSE = pygame.image.load('chessboard/piece/bn.png')
+        BLACK_PAWN = pygame.image.load('chessboard/piece/bp.png')
+        BLACK_CHARIOT = pygame.image.load('chessboard/piece/br.png')
+        RED_ASSISTANT = pygame.image.load('chessboard/piece/ra.png')
+        RED_ELEPHANT = pygame.image.load('chessboard/piece/rb.png')
+        RED_CANNON = pygame.image.load('chessboard/piece/rc.png')
+        RED_KING = pygame.image.load('chessboard/piece/rk.png')
+        RED_HORSE = pygame.image.load('chessboard/piece/rn.png')
+        RED_PAWN = pygame.image.load('chessboard/piece/rp.png')
+        RED_CHARIOT = pygame.image.load('chessboard/piece/rr.png')
+        POSSIBLE_MOVE_FRAME = pygame.image.load('chessboard/piece/mask.png')
+        SELECTED_FRAME = pygame.image.load('chessboard/piece/mm.png')
 
-        piece_dict = {('r', False): black_chariot, ('h', False): black_horse,
-                      ('e', False): black_elephant, ('a', False): black_assistant,
-                      ('k', False): black_king, ('c', False): black_cannon,
-                      ('p', False): black_pawn, ('r', True): red_chariot, ('h', True): red_horse,
-                      ('e', True): red_elephant, ('a', True): red_assistant, ('k', True): red_king,
-                      ('c', True): red_cannon, ('p', True): red_pawn}
+        PIECE_DICT = {('r', False): BLACK_CHARIOT, ('h', False): BLACK_HORSE,
+                      ('e', False): BLACK_ELEPHANT, ('a', False): BLACK_ASSISTANT,
+                      ('k', False): BLACK_KING, ('c', False): BLACK_CANNON,
+                      ('p', False): BLACK_PAWN, ('r', True): RED_CHARIOT, ('h', True): RED_HORSE,
+                      ('e', True): RED_ELEPHANT, ('a', True): RED_ASSISTANT, ('k', True): RED_KING,
+                      ('c', True): RED_CANNON, ('p', True): RED_PAWN}
 
-        # Load font TODO change font
-        font_bold = pygame.font.SysFont('Comic Sans MS', 36, bold=True)
-        font = pygame.font.SysFont('Comic Sans MS', 24)
+        # Load font
+        FONT_BOLD = pygame.font.SysFont('American Typewriter', 36, bold=True)
+        FONT = pygame.font.SysFont('American Typewriter', 24)
 
         # Define RGB colours
-        black = (0, 0, 0)
-        red = (255, 0, 0)
-        blue = (0, 0, 255)
-        white = (255, 255, 255)
+        BLACK = (0, 0, 0)
+        RED = (255, 0, 0)
+        BLUE = (0, 0, 255)
+        WHITE = (255, 255, 255)
 
     def run(self) -> None:
         """Run the game."""
@@ -138,8 +136,8 @@ class Game:
 
                         # Mark where the piece was before the move
                         piece_frame_coord = coordinate_to_pixel(self._curr_coord)
-                        piece_frame_rect = selected_frame.get_rect(center=piece_frame_coord)
-                        self._screen.blit(selected_frame, piece_frame_rect)
+                        piece_frame_rect = SELECTED_FRAME.get_rect(center=piece_frame_coord)
+                        self._screen.blit(SELECTED_FRAME, piece_frame_rect)
 
                         self._ready_to_move = False
                         pygame.display.flip()
@@ -157,8 +155,8 @@ class Game:
                         # Mark where the piece was before the move
                         opponent_piece_frame_coord = coordinate_to_pixel(opponent_piece_coord)
                         opponent_piece_frame_rect = \
-                            selected_frame.get_rect(center=opponent_piece_frame_coord)
-                        self._screen.blit(selected_frame, opponent_piece_frame_rect)
+                            SELECTED_FRAME.get_rect(center=opponent_piece_frame_coord)
+                        self._screen.blit(SELECTED_FRAME, opponent_piece_frame_rect)
                         pygame.display.flip()
 
                         if self._check_for_end():
@@ -166,14 +164,14 @@ class Game:
 
     def _print_game(self) -> None:
         """Print the current state of the game."""
-        self._screen.blit(board_image, (0, 0))  # Display board
-        self._screen.blit(coord_image, (0, 0))  # Display coordinates
+        self._screen.blit(BOARD_IMAGE, (0, 0))  # Display board
+        self._screen.blit(COORD_IMAGE, (0, 0))  # Display coordinates
         for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:  # Display pieces
             piece = self._game.get_board()[pos[0]][pos[1]]
             if piece is not None:
                 piece_coord = coordinate_to_pixel((pos[0], pos[1]))
-                piece_rect = piece_dict[(piece.kind, piece.is_red)].get_rect(center=piece_coord)
-                self._screen.blit(piece_dict[(piece.kind, piece.is_red)], piece_rect)
+                piece_rect = PIECE_DICT[(piece.kind, piece.is_red)].get_rect(center=piece_coord)
+                self._screen.blit(PIECE_DICT[(piece.kind, piece.is_red)], piece_rect)
 
     def _get_possible_moves_for_piece(self, pos: tuple[int, int]) -> None:
         """Print the possible moves one can go with the selected piece (whose location is indicated
@@ -190,8 +188,8 @@ class Game:
 
         # Since this piece belongs to red, frame it to indicate that it is selected
         piece_frame_coord = coordinate_to_pixel(self._curr_coord)
-        piece_frame_rect = selected_frame.get_rect(center=piece_frame_coord)
-        self._screen.blit(selected_frame, piece_frame_rect)
+        piece_frame_rect = SELECTED_FRAME.get_rect(center=piece_frame_coord)
+        self._screen.blit(SELECTED_FRAME, piece_frame_rect)
 
         # Also frame where the selected piece can go
         piece_possible_moves = [move for move in possible_moves
@@ -200,8 +198,8 @@ class Game:
                                   for move in piece_possible_moves]
         for coord in self._movement_indices:
             frame_coord = coordinate_to_pixel(coord)
-            frame_rect = possible_move_frame.get_rect(center=frame_coord)
-            self._screen.blit(possible_move_frame, frame_rect)
+            frame_rect = POSSIBLE_MOVE_FRAME.get_rect(center=frame_coord)
+            self._screen.blit(POSSIBLE_MOVE_FRAME, frame_rect)
 
         self._ready_to_move = True
 
@@ -211,44 +209,44 @@ class Game:
             if self._game.get_winner() == 'Red':
                 self._game_ended = True
                 # Display winning message
-                message = font_bold.render('Congratulations! You won!', True, red)
+                message = FONT_BOLD.render('Congratulations! You won!', True, RED)
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(white)
+                message_surface.fill(WHITE)
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = font.render('Please close this window.', True, red)
+                closing_message = FONT.render('Please close this window.', True, RED)
             elif self._game.get_winner() == 'Black':
                 self._game_ended = True
                 # Display losing message
-                message = font_bold.render('Too bad. You lost.', True, black)
+                message = FONT_BOLD.render('Too bad. You lost.', True, BLACK)
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(white)
+                message_surface.fill(WHITE)
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = font.render('Please close this window.', True, black)
+                closing_message = FONT.render('Please close this window.', True, BLACK)
             else:  # self._game.get_winner() == 'Draw'
                 self._game_ended = True
                 # Display draw message
-                message = font_bold.render('No one won.', True, blue)
+                message = FONT_BOLD.render('No one won.', True, BLUE)
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(white)
+                message_surface.fill(WHITE)
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = font.render('Please close this window.', True, blue)
+                closing_message = FONT.render('Please close this window.', True, BLUE)
 
             # Instructs the player to close the window
             closing_message_rect = closing_message.get_rect(center=(280, 350))
             closing_message_surface = pygame.Surface(closing_message.get_size())
-            closing_message_surface.fill(white)
+            closing_message_surface.fill(WHITE)
             closing_message_surface.set_alpha(200)
             self._screen.blit(closing_message_surface, closing_message_rect)
             self._screen.blit(closing_message, closing_message_rect)
@@ -284,6 +282,13 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     return y // 56, x // 56
 
 
-# if __name__ == '__main__':
-#     g = Game(RandomPlayer())
-#     g.run()
+if __name__ == '__main__':
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
+
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
+    #     'extra-imports': ['chess_game', 'player', 'pygame']
+    # })
