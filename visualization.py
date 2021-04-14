@@ -154,18 +154,18 @@ class Game:
 
         # Current status display
         your_move = IMAGE_DICT['font'].render('Your move', True, IMAGE_DICT['red'])
-        your_move_rect = your_move.get_rect(topleft=(680, 450))
+        your_move_rect = your_move.get_rect(topleft=(650, 450))
         self._screen.blit(your_move, your_move_rect)
 
         opponent_move = IMAGE_DICT['font'].render("Opponent's move", True, IMAGE_DICT['red'])
-        opponent_move_rect = opponent_move.get_rect(topleft=(680, 500))
+        opponent_move_rect = opponent_move.get_rect(topleft=(650, 500))
         self._screen.blit(opponent_move, opponent_move_rect)
 
     def run(self) -> None:
         """Run the game."""
         # Initialize chess game
         self._print_game()
-        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 465))
+        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
         self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
 
         pygame.display.flip()
@@ -195,9 +195,6 @@ class Game:
                         self._ready_to_move = False
                         pygame.display.flip()
                     else:  # Make the move!
-                        if self.sfx:
-                            IMAGE_DICT['move_sound'].play()
-
                         try:
                             wxf_move = _get_wxf_movement(self._game.get_board(),
                                                          self._curr_coord, new_coordinate, True)
@@ -215,6 +212,8 @@ class Game:
                         if self.sfx and pieces_before != pieces_after:
                             IMAGE_DICT['capture_sound'].play()
                         self._print_game()
+                        if self.sfx:
+                            IMAGE_DICT['move_sound'].play()
 
                         # Mark where the piece was before the move
                         piece_frame_coord = coordinate_to_pixel(self._curr_coord)
@@ -234,7 +233,7 @@ class Game:
                         self._screen.blit(status_clear, status_rect)
 
                         # Show the new status light
-                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 515))
+                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 515))
                         self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
                         pygame.display.flip()
 
@@ -276,7 +275,7 @@ class Game:
                         self._screen.blit(status_clear, status_rect)
 
                         # Show the new status light
-                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 465))
+                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
                         self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
                         pygame.display.flip()
 
