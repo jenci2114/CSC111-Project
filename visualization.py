@@ -205,6 +205,8 @@ class Game:
                             pygame.display.flip()
                             continue
 
+                        destination = _get_index_movement(self._game.get_board(), wxf_move, True)
+
                         pieces_before = piece_count(self._game.get_board())
                         self._game.make_move(wxf_move)
                         pieces_after = piece_count(self._game.get_board())
@@ -217,6 +219,12 @@ class Game:
                         piece_frame_rect = IMAGE_DICT['selected_frame'].get_rect(
                             center=piece_frame_coord)
                         self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_rect)
+
+                        # Mark where the piece is right now
+                        piece_frame_coord_after = coordinate_to_pixel(destination)
+                        piece_frame_after_rect = IMAGE_DICT['selected_frame'].get_rect(
+                            center=piece_frame_coord_after)
+                        self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_after_rect)
 
                         # Clear the light displaying current status
                         status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
@@ -235,6 +243,10 @@ class Game:
                         opponent_wxf_move = self.opponent.make_move(self._game, wxf_move)
                         opponent_piece_coord = _wxf_to_index(self._game.get_board(),
                                                              opponent_wxf_move[0:2], False)
+
+                        opponent_destination = _get_index_movement(self._game.get_board(),
+                                                                   opponent_wxf_move, False)
+
                         self._game.make_move(opponent_wxf_move)
                         if self.sfx:
                             IMAGE_DICT['move_sound'].play()
@@ -248,6 +260,13 @@ class Game:
                         opponent_piece_frame_rect = \
                             IMAGE_DICT['selected_frame'].get_rect(center=opponent_piece_frame_coord)
                         self._screen.blit(IMAGE_DICT['selected_frame'], opponent_piece_frame_rect)
+
+                        # Mark where the piece is right now
+                        opponent_piece_frame_coord_after = coordinate_to_pixel(opponent_destination)
+                        opponent_piece_frame_after_rect = IMAGE_DICT['selected_frame'].get_rect(
+                            center=opponent_piece_frame_coord_after)
+                        self._screen.blit(IMAGE_DICT['selected_frame'],
+                                          opponent_piece_frame_after_rect)
 
                         # Clear the light displaying current status
                         status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
