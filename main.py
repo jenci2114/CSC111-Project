@@ -35,9 +35,9 @@ def present() -> None:
         option = input()
         option2 = input()
 
-    if option == 4 and option2 == "True":
+    if option == '4' and option2 == "True":
         g = Game(AIBlack('tree.xml', 3), True, True)
-    elif option == 4 and option2 == "False":
+    elif option == '4' and option2 == "False":
         g = Game(AIBlack('tree.xml', 3))
     elif option in {'1', '2', '3'} and option2 == "True":
         g = Game(ExploringPlayer(int(option) + 1), True, True)
