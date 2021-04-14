@@ -49,13 +49,13 @@ class Game:
         self.music = music
         self.sfx = sfx
         # self._screen = pygame.display.set_mode((560, 645))
-        self._screen = pygame.display.set_mode((800, 645))
+        self._screen = pygame.display.set_mode((1000, 645))
         self._game = ChessGame()
         self._curr_coord = ()
         self._ready_to_move = False
         self._movement_indices = []
         self._game_ended = False
-        pygame.display.set_caption('Chinese Chess!!')
+        pygame.display.set_caption('Chinese Chess!')
 
         # Load images
         board_image = pygame.image.load('chessboard/board/004.jpg')
@@ -77,6 +77,11 @@ class Game:
         possible_move_frame = pygame.image.load('chessboard/piece/mask.png')
         selected_frame = pygame.image.load('chessboard/piece/mm.png')
 
+        # Change icon
+        icon = pygame.Surface(black_elephant.get_size())
+        icon.blit(black_elephant, (0, 0))
+        pygame.display.set_icon(icon)
+
         # Load sound and music
         check_sound = pygame.mixer.Sound('chessboard/sound/check.wav')
         move_sound = pygame.mixer.Sound('chessboard/sound/move.wav')
@@ -85,14 +90,14 @@ class Game:
         # Load font
         font_bold = pygame.font.SysFont('American Typewriter', 36, bold=True)
         font = pygame.font.SysFont('American Typewriter', 24)
+        text = pygame.font.SysFont('Arial', 24)
 
-        # Define RGB colours
+        # Define RGB colours & display background
         black = (0, 0, 0)
         red = (255, 0, 0)
         blue = (0, 0, 255)
         white = (255, 255, 255)
         background_color = (181, 184, 191)
-        self._screen.fill(background_color)
 
         global IMAGE_DICT
         IMAGE_DICT = {('r', False): black_chariot, ('h', False): black_horse,
@@ -104,13 +109,63 @@ class Game:
                       'coord_image': coord_image, 'possible_move_frame': possible_move_frame,
                       'selected_frame': selected_frame, 'check_sound': check_sound,
                       'move_sound': move_sound, 'capture_sound': capture_sound,
-                      'font_bold': font_bold, 'font': font, 'black': black, 'red': red,
-                      'blue': blue, 'white': white}
+                      'font_bold': font_bold, 'font': font, 'text': text, 'black': black,
+                      'red': red, 'blue': blue, 'white': white}
+
+        # Display background
+        self._screen.fill(background_color)
+        self.display_instructions()
+
+    def display_instructions(self) -> None:
+        """Display the instructions and the status bar on the right side of the board."""
+        # Instructions display
+        instruction_1 = IMAGE_DICT['text'].render('Instructions', True, IMAGE_DICT['black'])
+        instruction_1_rect = instruction_1.get_rect(topleft=(600, 50))
+        self._screen.blit(instruction_1, instruction_1_rect)
+        instruction_2 = IMAGE_DICT['text'].render('During your turn, click', True,
+                                                  IMAGE_DICT['black'])
+        instruction_2_rect = instruction_2.get_rect(topleft=(600, 100))
+        self._screen.blit(instruction_2, instruction_2_rect)
+        instruction_3 = IMAGE_DICT['text'].render('one of your pieces to get', True,
+                                                  IMAGE_DICT['black'])
+        instruction_3_rect = instruction_3.get_rect(topleft=(600, 140))
+        self._screen.blit(instruction_3, instruction_3_rect)
+        instruction_4 = IMAGE_DICT['text'].render('all of its valid moves.', True,
+                                                  IMAGE_DICT['black'])
+        instruction_4_rect = instruction_4.get_rect(topleft=(600, 180))
+        self._screen.blit(instruction_4, instruction_4_rect)
+        instruction_5 = IMAGE_DICT['text'].render('Then click on the desired', True,
+                                                  IMAGE_DICT['black'])
+        instruction_5_rect = instruction_5.get_rect(topleft=(600, 220))
+        self._screen.blit(instruction_5, instruction_5_rect)
+        instruction_6 = IMAGE_DICT['text'].render('location to make move or', True,
+                                                  IMAGE_DICT['black'])
+        instruction_6_rect = instruction_6.get_rect(topleft=(600, 260))
+        self._screen.blit(instruction_6, instruction_6_rect)
+        instruction_7 = IMAGE_DICT['text'].render('click anywhere else to', True,
+                                                  IMAGE_DICT['black'])
+        instruction_7_rect = instruction_7.get_rect(topleft=(600, 300))
+        self._screen.blit(instruction_7, instruction_7_rect)
+        instruction_8 = IMAGE_DICT['text'].render('deselect the piece.', True, IMAGE_DICT['black'])
+        instruction_8_rect = instruction_8.get_rect(topleft=(600, 340))
+        self._screen.blit(instruction_8, instruction_8_rect)
+
+        # Current status display
+        your_move = IMAGE_DICT['font'].render('Your move', True, IMAGE_DICT['red'])
+        your_move_rect = your_move.get_rect(topleft=(680, 450))
+        self._screen.blit(your_move, your_move_rect)
+
+        opponent_move = IMAGE_DICT['font'].render("Opponent's move", True, IMAGE_DICT['red'])
+        opponent_move_rect = opponent_move.get_rect(topleft=(680, 500))
+        self._screen.blit(opponent_move, opponent_move_rect)
 
     def run(self) -> None:
         """Run the game."""
         # Initialize chess game
         self._print_game()
+        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 465))
+        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
+
         pygame.display.flip()
 
         if self.music:
@@ -140,8 +195,16 @@ class Game:
                     else:  # Make the move!
                         if self.sfx:
                             IMAGE_DICT['move_sound'].play()
-                        wxf_move = _get_wxf_movement(self._game.get_board(),
-                                                     self._curr_coord, new_coordinate, True)
+
+                        try:
+                            wxf_move = _get_wxf_movement(self._game.get_board(),
+                                                         self._curr_coord, new_coordinate, True)
+                        except ValueError:  # A pygame error occurred! Reset to previous state.
+                            self._print_game()
+                            self._ready_to_move = False
+                            pygame.display.flip()
+                            continue
+
                         pieces_before = piece_count(self._game.get_board())
                         self._game.make_move(wxf_move)
                         pieces_after = piece_count(self._game.get_board())
@@ -155,7 +218,14 @@ class Game:
                             center=piece_frame_coord)
                         self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_rect)
 
-                        self._ready_to_move = False
+                        # Clear the light displaying current status
+                        status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
+                        status_clear.fill((181, 184, 191))
+                        self._screen.blit(status_clear, status_rect)
+
+                        # Show the new status light
+                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 515))
+                        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
                         pygame.display.flip()
 
                         if self._check_for_end():
@@ -178,6 +248,15 @@ class Game:
                         opponent_piece_frame_rect = \
                             IMAGE_DICT['selected_frame'].get_rect(center=opponent_piece_frame_coord)
                         self._screen.blit(IMAGE_DICT['selected_frame'], opponent_piece_frame_rect)
+
+                        # Clear the light displaying current status
+                        status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
+                        status_clear.fill((181, 184, 191))
+                        self._screen.blit(status_clear, status_rect)
+
+                        # Show the new status light
+                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(650, 465))
+                        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
                         pygame.display.flip()
 
                         if self._check_for_end():
@@ -311,13 +390,16 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     return y // 56, x // 56
 
 
-# if __name__ == '__main__':
-#     import python_ta.contracts
-#     python_ta.contracts.check_all_contracts()
-#
-#     import python_ta
-#     python_ta.check_all(config={
-#         'max-line-length': 100,
-#         'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
-#         'extra-imports': ['chess_game', 'player', 'pygame']
-#     })
+if __name__ == '__main__':
+    from player import ExploringPlayer
+    g = Game(ExploringPlayer(3))
+    g.run()
+    # import python_ta.contracts
+    # python_ta.contracts.check_all_contracts()
+    #
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 100,
+    #     'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
+    #     'extra-imports': ['chess_game', 'player', 'pygame']
+    # })
