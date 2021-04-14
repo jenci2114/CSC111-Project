@@ -1,10 +1,7 @@
 # CSC111 final project: Python libraries we'll be use.
 
-# build-in python library
-xml.etree.ElementTr
-multiprocessi
-csv
-
-# python library require downloading
+# code checking
 python-ta
+
+# code visualizing
 pygame
