@@ -27,22 +27,33 @@ def present() -> None:
     print("'3' for an intermediate-level AI (Warning: each step takes 30-600 seconds)")
     print("'4' for a trained novice-level AI (Warning: takes 1 minute to load tree)")
     option = input()
-    print("'True' if you want a background music, 'False' if you do not want a bgm")
-    option2 = input()
 
-    while option not in {'1', '2', '3', '4'} or option2 not in {'True', 'False'}:
+    while option not in {'1', '2', '3', '4'}:
         print('Invalid input. Please try again.')
         option = input()
-        option2 = input()
 
-    if option == '4' and option2 == "True":
-        g = Game(AIBlack('tree.xml', 3), True, True)
-    elif option == '4' and option2 == "False":
-        g = Game(AIBlack('tree.xml', 3))
-    elif option in {'1', '2', '3'} and option2 == "True":
-        g = Game(ExploringPlayer(int(option) + 1), True, True)
+    print("Please indicate your music settings:")
+
+    print("Enter 'y' (just the letter) if you want background music. "
+          "Enter anything else otherwise.")
+    bgm_option = input()
+    if bgm_option == 'y':
+        bgm = True
     else:
-        g = Game(ExploringPlayer(int(option) + 1))
+        bgm = False
+
+    print("Enter 'y' (just the letter) if you want sound effects. "
+          "Enter anything else otherwise.")
+    sfx_option = input()
+    if sfx_option == 'y':
+        sfx = True
+    else:
+        sfx = False
+
+    if option == '4':
+        g = Game(AIBlack('tree.xml', 3), bgm, sfx)
+    else:  # option in {'1', '2', '3'}
+        g = Game(ExploringPlayer(int(option) + 1), bgm, sfx)
 
     g.run()
 
