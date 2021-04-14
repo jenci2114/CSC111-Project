@@ -25,9 +25,9 @@ def present() -> None:
           'Good luck and hopefully you can beat our AI!')
     print('Please indicate which AI you would like to fight against:')
     print("Enter '1' for a beginner-level AI")
-    print("'2' for a novice-level AI")
-    print("'3' for an intermediate-level AI (Warning: each step takes 30-600 seconds)")
-    print("'4' for a trained novice-level AI (Warning: takes 1 minute to load tree)")
+    print("'2' for an intermediate-level AI")
+    print("'3' for a trained intermediate-level AI")
+    print("'4' for an advanced-level AI (Warning: each step takes 30-600 seconds)")
     option = input()
 
     while option not in {'1', '2', '3', '4'}:
@@ -52,9 +52,11 @@ def present() -> None:
     else:
         sfx = False
 
-    if option == '4':
+    if option == '3':
         g = Game(AIBlack('tree.xml', 3), bgm, sfx)
-    else:  # option in {'1', '2', '3'}
+    elif option == '4':
+        g = Game(ExploringPlayer(4))
+    else:  # option in {'1', '2'}
         g = Game(ExploringPlayer(int(option) + 1), bgm, sfx)
 
     g.run()
