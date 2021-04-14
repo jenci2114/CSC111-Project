@@ -51,8 +51,7 @@ class Game:
         self.opponent = player
         self.music = music
         self.sfx = sfx
-        # self._screen = pygame.display.set_mode((560, 645))
-        self._screen = pygame.display.set_mode((1000, 645))
+        self._screen = pygame.display.set_mode((920, 645))
         self._game = ChessGame()
         self._curr_coord = ()
         self._ready_to_move = False
@@ -413,8 +412,8 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
 
 
 if __name__ == '__main__':
-    from player import ExploringPlayer
-    g = Game(ExploringPlayer(3), True, True)
+    from player import ExploringPlayer, AIBlack
+    g = Game(ExploringPlayer(3))
     g.run()
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
