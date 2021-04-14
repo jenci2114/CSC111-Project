@@ -3,18 +3,18 @@
 Module Description
 ===============================
 
-This Python module contains Player classes, including RandomPlayer, RandomTreePlayer,
-GreedyTreePlayer, ExploringPlayer, LearningPlayer, Human, AIRed and AIBlack.
+This Python module contains all Player classes,
+where each subclass of Player represents a different
+strategy the computer will use in Chinese Chess.
 
 Copyright and Usage Information
 ===============================
 
-This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao, Jenci Wei
 """
 from __future__ import annotations
 import multiprocessing
 import random
-import time
 import os
 from typing import Optional
 import game_run
@@ -76,7 +76,8 @@ class RandomPlayer(Player):
 
 class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
-     and find a locally optimal move.
+     and find a locally optimal move.( The explanation of alpha-beta algorithm will be
+     explained below)
 
      If there is more than one optimal move, then randomly choose a move with the highest
      relative point.
@@ -107,7 +108,6 @@ class ExploringPlayer(Player):
         Preconditions:
             - There is at least one valid move for the given game
         """
-        start_time = time.time()
         if previous_move is None:
             pass
         else:
@@ -145,16 +145,82 @@ class ExploringPlayer(Player):
         # If there are still ties, choose one randomly
         chosen_move = random.choice(candidate_subtrees).move
 
-        print(f'Time taken to make this move: {time.time() - start_time} seconds')
-        print('Respective points, red win probability, black win probability for each move:')
-        print({s.move: (s.relative_points, s.red_win_probability, s.black_win_probability)
-               for s in self._game_tree.get_subtrees()})
-        print(f'Move chosen: {chosen_move}')
         return chosen_move
 
     def _alpha_beta(self, game: ChessGame, tree: GameTree, depth: int,
                     alpha: int, beta: int) -> int:
         """The alpha-beta pruning algorithm that will be used when this player makes a move.
+
+        To understand what is an alpha-beta algorithm, we first need to know what is a Minimax
+        algorithm. In this algorithm, we have two players, which are Maximizer and Minimizer.
+        Maximizer tries to get the highest score while Minimizer tries to get the lowest score.
+        In our game tree, we we have to go all the way through the leaves to reach the terminal
+        nodes. At the terminal node, we calculate the terminal values by the function "calculate_
+        absolute_points". we will compare those value and backtrack the tree until the initial
+        state occurs. We will illustrate this concept with the below example (the tree drawing):
+
+        At the beginning, the highest score equals negative infinity (because player A has
+        found no moves yet) while the lowest score equals positive infinity (because player
+        B has found no moves yet).
+
+        Now, first we find the value for the Minimizer, its initial value is positive infinity,
+        so we will compare each value in terminal state with initial value of Minimizer and
+        determines the higher nodes values. It will find the minimum among the all.
+
+         In the next step, it's a turn for Maximizer, so it will compare all nodes value with
+         negative infinity, and will find the 2rd layer node values.
+
+        Now it's a turn for Minimizer, and it will again choose the minimum of all nodes value
+        and find the minimum value for the root node. In this tree, there are only 4 layers,
+        hence we reach immediately to the root node.
+
+                                                  6                                Maximum
+                                             /    |   \
+                                          /       |      \
+                                       /          |         \
+                                    /             |            \
+                                 /                |               \
+                               3                  6                5               Minimum
+                              /\                 | \              /\
+                             /  \                |  \            /  X
+                           /     \               |   \          /    \
+                         5        3              6    7        5      ?            Maximum
+                        / \        \            / \    \       |     | \
+                      /    \        \         /    \    \      |     |  \
+                    /       \        \      /       \    \     |     |   \
+                  5         4         3    6         6    7    5     ?    ?        Minimum
+                 /|        /| \       |    |       / |    |    |    | \    \
+               /  |      /  |  X      |    |      /  X    |    |    |  \    \
+              /   |     /   |   \     |    |     /   |    |    |    |   \    \
+             5    6    7    4    ?    3    6    6    ?    7    5    ?    ?    ?    Maximum
+
+
+        In alpha-beta pruning algorithm, alpha represents the highest score Maximizer searches for
+        while beta represents the lowest score Minimizer searches for. At the beginning, Alpha
+        equals negative infinity (because the Maximizer has found no moves yet) while beta equals
+        positive infinity (because the Minimizer has found no moves yet). We will use the above
+        tree as an example.
+
+        Now, first we find the value for the Minimizer, its initial value is positive infinity,
+        so we will first compare 5 (the leftmost node of the leftmost branch in that layer with
+        initial value of Minimizer and determines the higher nodes values, which is 5 in this case.
+        Then we can know that the Minimizer will be less than or equal to 5. When we search for
+        another node of the branch, we find that 6 is larger than 5, so the minimizer will choose 5
+        When we search for the branch right to the leftmost branch, the Minimizer first choose 7,
+        and then choose 4 (by comparing 7 to 4). Since for the upper level, Maximizer will choose
+        the greater value, and we already know that 5 is larger than 4, so no matter what is the
+        rightmost node of the second branch, the Maximizer will choose 5 from the leftmost branch.
+        Thus, we can prune the rightmost subtree of the second branch. By repeating above steps
+        again and again, we will get the graph above.
+
+        Through pruning the subtrees, we will get a result no differ from what we would get
+        using Minimax; however, since we are not evaluating some of the nodes by pruning them,
+        the alpha-beta algorithm runs faster than the Minimax algorithm.
+
+        The ? subtrees don't need to be explored (when moves are evaluated from left to
+        right), since it is known that the group of subtrees as a whole yields the value of an
+        equivalent subtree or worse, and as such cannot influence the final result. The max and min
+        levels represent the turn of the player and the adversary, respectively.
 
         Note: +- 1000000 will be used to represent +- infinity
 
@@ -219,6 +285,9 @@ class ExploringPlayer(Player):
         """The alpha-beta pruning algorithm that is functionally identical to the
         above implementation, except this one uses multiprocessing.
 
+        Note: Multiprocessing is the use of two or more central processing units (CPUs)
+        within a single computer system.
+
         Warning: Do NOT recurse on this method, recurse on the non-multiprocessing method.
 
         Preconditions:
@@ -235,27 +304,20 @@ class ExploringPlayer(Player):
                                               args=(game, depth, alpha, beta, start, end))
             processes.append(process)
             process.start()
-            if i != PROCESSES - 2:
+            if i != PROCESSES - 2:  # if it is not the end of the process
                 start, end = end, end + per_process
-            else:
+            else:  # until the last process
                 start, end = end, end + last_process
 
         for p in processes:
             p.join()
 
         for i in range(len(moves)):
-            subtree = xml_to_tree(f'temp/process{i}.xml')
+            subtree = xml_to_tree(f'temp/process{i}.xml')  # store the temp tree
             self._game_tree.add_subtree(subtree)
-            os.remove(f'temp/process{i}.xml')
+            os.remove(f'temp/process{i}.xml')  # after adding the subtree, remove the temp tree
 
-        print(f"Let's see which move is the dupe! {sorted([(s.move, s.relative_points) for s in self._game_tree.get_subtrees()])}")
-        moves_so_far = []
-        for sub in self._game_tree.get_subtrees():
-            if sub.move in moves_so_far:
-                print(f'Found the dupe! {sub.move}')
-            else:
-                moves_so_far.append(sub.move)
-
+        # similar to alpha-beta
         if game.is_red_move():
             value = max(s.relative_points for s in self._game_tree.get_subtrees())
         else:
@@ -365,8 +427,7 @@ class LearningPlayer(Player):
             if self._game_tree.is_red_move:
                 if self._game_tree.red_win_probability > EPSILON:
                     # the best move reaches our expectation and thus
-                    # the player does not need to explore a new move
-                    # find the best move in subtrees
+                    # the player will find the best move in subtrees
                     subtrees = self._game_tree.get_subtrees()
                     # list of red win probabilities corresponding to subtrees
                     subtrees_win_prob_red = [sub.red_win_probability for sub in subtrees]
@@ -398,6 +459,7 @@ class LearningPlayer(Player):
 
         Note: The depth for ExploringPlayer is the same as self._depth.
         """
+        # initialize an exploring player
         explore = ExploringPlayer(self._depth)
         move = explore.make_move(game, previous_move)
         if self._game_tree is None:
@@ -469,14 +531,17 @@ class AIBlack(Player):
             self._game_tree = self._game_tree.find_subtree_by_move(previous_move)
 
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
+            # there is no existing possible moves in self._game_tree
+            # use exploring player
             explorer = ExploringPlayer(self._depth)
             move = explorer.make_move(game, previous_move)
             new_subtree = explorer.get_tree()
+            # add the new tree explored two self._current_subtree
             self._current_subtree.add_subtree(new_subtree)
-            self._current_subtree = new_subtree
-            self._current_subtree = self._current_subtree.find_subtree_by_move(move)
+            # update self._current_subtree to trace the previous move
+            self._current_subtree = new_subtree.find_subtree_by_move(move)
             return move
-        else:
+        else:  # there is possible moves to choose from self._game_tree
             new_subtree = GameTree(previous_move, False)
             subtrees = self._game_tree.get_subtrees()
 
@@ -496,10 +561,15 @@ class AIBlack(Player):
 
             # If there are still ties, choose one in random
             chosen_subtree = random.choice(candidate_subtrees)
-            self._game_tree = chosen_subtree
+            self._game_tree = chosen_subtree  # We know that this is a subtree of self._game_tree
+
+            # Add the subtree for the previous move to self._current_subtree (denoted scs)
             self._current_subtree.add_subtree(new_subtree)
+            # Assign scs to new_subtree, which is a subtree of the original scs
             self._current_subtree = new_subtree
+            # Add the subtree for the chosen move to scs
             self._current_subtree.add_subtree(chosen_subtree)
+            # Assign scs to chosen_subtree, which is a subtree of the original scs
             self._current_subtree = chosen_subtree
             return self._game_tree.move
 
@@ -523,25 +593,6 @@ class AIBlack(Player):
             self._game_tree = None
 
 
-def train_black_ai(file: str, depth: int, iterations: int) -> None:
-    """Train the black ai by expanding the tree stored in file.
-
-    This function creates an AIBlack player with the given file and the given depth. This function
-    also creates an exploring player of depth 3. <iterations> number of games will be run between
-    them and the tree will be stored after each game.
-
-    Preconditions:
-        - file represents a valid game tree
-        - depth > 0
-        - iterations > 0
-    """
-    for _ in range(iterations):
-        ai_player = AIBlack(file, depth)
-        exploring_player = ExploringPlayer(4)
-        game_run.run_games(1, exploring_player, ai_player, True)
-        ai_player.store_tree()
-
-
 if __name__ == '__main__':
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
@@ -553,6 +604,5 @@ if __name__ == '__main__':
     # python_ta.check_all(config={
     #     'max-line-length': 100,
     #     'disable': ['E1136', 'E9994', 'E9998', 'R0913', 'R0914'],
-    #     'extra-imports': ['chess_game', 'game_tree', 'game_run', 'multiprocessing', 'random',
-    #                       'time', 'os']
+    #     'extra-imports': ['chess_game', 'game_tree', 'game_run', 'multiprocessing', 'random', 'os']
     # })

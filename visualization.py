@@ -3,12 +3,15 @@
 Module Description
 ===============================
 
-This Python module contains Game class and is used for interaction with human player.
+This Python module contains Game class, which is
+responsible for displaying the Chinese Chess interface
+via Pygame and enabling humans to play against the
+AI Players we created.
 
 Copyright and Usage Information
 ===============================
 
-This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao, Jenci Wei
 """
 
 import pygame

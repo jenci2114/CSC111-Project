@@ -1,4 +1,18 @@
-"""..."""
+"""CSC111 Final Project: AI Player in Chinese Chess
+
+Module Description
+===============================
+
+This Python module contains the class ChessGame, which is
+responsible for Chinese Chess functioning; class _Piece, which
+represents Chinese Chess pieces. Also, this module
+contains methods necessary for converting between coordinate
+notation and wxf (i.e. World Xiangqi Foundation) notations.
+
+Copyright and Usage Information
+===============================
+
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao, Jenci Wei"""
 
 from __future__ import annotations
 from typing import Optional
@@ -29,6 +43,11 @@ class ChessGame:
     #   - _valid_moves: a list of the valid moves of the current player
     #   - _is_red_active: a boolean representing whether red is the current player
     #   - _move_count: the number of moves that have been made in the current game
+    #
+    # Private Representation Invariants:
+    #   - _board must be a legal Chinese Chess board (e.g. cannot contain 3 red elephants, etc.)
+    #   - all moves in _valid_moves must be legal (e.g. cannot have a pawn like a horse, etc.)
+    #   - 0 <= _move_count <= _MAX_MOVES
     _board: list[list[Optional[_Piece]]]
     _valid_moves: list[str]
     _is_red_active: bool
@@ -59,10 +78,11 @@ class ChessGame:
         9  丨----一----一----一----一----一----一----一----丨
            〇    一    二    三    四    五    六    七    八
 
-        Note: the index numbering above is VERY different from what is used for the WXF notation.
+        Note: the index numbering above is VERY different from what is used for the WXF notation,
+        please use the conversion functions below to convert between the two.
         """
         if board is not None:
-            self._board = board
+            self._board = board  # load the given board
         else:
             self._board = [
                 # index 0:
@@ -97,24 +117,25 @@ class ChessGame:
         self._move_count = move_count
         self._valid_moves = []
 
-        self._recalculate_valid_moves()
+        self._recalculate_valid_moves()  # Ensure that self._valid_moves is up-to-date
 
     def __str__(self) -> str:
         """Return the string representation of the board, who is active, and valid moves.
 
         If the game is finished, return the string representation of the board and who wins.
         """
+        # Print (not return) the board representation in a visual way
         print_board(self._board)
         winner = self.get_winner()
 
-        if winner is None:
+        if winner is None:  # the if-branch returns who's turn is it and the valid moves
             turn_message = ''
             if self._is_red_active:
                 turn_message += "Red's turn.\n"
             else:
                 turn_message += "Black's turn.\n"
             return turn_message + f'Valid moves: {self._valid_moves}'
-        elif winner == 'Draw':
+        elif winner == 'Draw':  # the elif-branch and the else-branch return the result
             return 'Draw!'
         else:  # Red wins or black wins
             return f'{winner} wins!'
@@ -129,14 +150,17 @@ class ChessGame:
 
         If move is not a currently valid move, raise a ValueError.
         """
+        # Ensure that all moves - whether given in upper-case or lower-case - will be recognized
         move_lowered = move.lower()
 
+        # Invalid move
         if move_lowered not in self._valid_moves:
             raise ValueError(f'Move "{move}" is not valid')
 
+        # Update board
         self._board = self._board_after_move(move_lowered, self._is_red_active)
 
-        self._is_red_active = not self._is_red_active
+        self._is_red_active = not self._is_red_active  # Whoever just played won't play again
         self._move_count += 1
 
         self._recalculate_valid_moves()
@@ -146,6 +170,10 @@ class ChessGame:
 
         If move is not a currently valid move, raise a ValueError.
         """
+        if move not in self._valid_moves:
+            raise ValueError(f'Move "{move}" is not valid')
+
+        # Create a new instance of ChessGame accordingly then return it
         return ChessGame(board=self._board_after_move(move, self._is_red_active),
                          red_active=not self._is_red_active,
                          move_count=self._move_count + 1)
@@ -159,114 +187,235 @@ class ChessGame:
 
         Return None if the game is not over.
         """
-        if self._move_count >= _MAX_MOVES:
+        if self._move_count >= _MAX_MOVES:  # Exceeded maximum number of moves, so draw
             return 'Draw'
-        elif all(self._board[y][x] != _Piece('k', True) for y in range(0, 10) for x in range(0, 9)):
+        elif all(self._board[y][x] != _Piece('k', True)
+                 for y in range(0, 10) for x in range(0, 9)):  # Cannot find red king
             return 'Black'
-        elif all(self._board[y][x] != _Piece('k', False) for y in range(0, 10) for x in range(0, 9)):
+        elif all(self._board[y][x] != _Piece('k', False)
+                 for y in range(0, 10) for x in range(0, 9)):  # Cannot find black king
             return 'Red'
-        else:
+        else:  # Game not over yet
             return None
 
     def _calculate_moves_for_board(self, board: list[list[Optional[_Piece]]],
                                    is_red_active: bool) -> list[str]:
-        """Return all possible moves on a given board with a given active player."""
-        moves = []
+        """Return all possible moves on a given board with a given active player.
 
-        for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        """
+        moves = []  # accumulator
+
+        for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:  # search entire board
             piece = board[pos[0]][pos[1]]
             if piece is None or piece.is_red != is_red_active:
-                continue
+                continue  # Not your piece, can't do anything, so skip
 
-            kind, is_red = piece.kind, piece.is_red
-
-            if kind == 'r':  # TODO: make each branch as helper
-                moves += self._find_moves_in_direction(board, pos, is_red, (1, 0))
-                moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0))
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, 1))
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, -1))
-            elif kind == 'h':
-                # The if-statements are 'horse-leg' condition checks
-                if pos[0] != 0 and board[pos[0] - 1][pos[1]] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-2, 1), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-2, -1), limit=1)
-                if pos[0] != 9 and board[pos[0] + 1][pos[1]] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (2, 1), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (2, -1), limit=1)
-                if pos[1] != 0 and board[pos[0]][pos[1] - 1] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, -2), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, -2), limit=1)
-                if pos[1] != 8 and board[pos[0]][pos[1] + 1] is None:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 2), limit=1)
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 2), limit=1)
-            elif kind == 'e':
-                if pos[0] not in {0, 5}:  # Can move towards black base
-                    # The if-statements are 'elephant-leg' condition checks
-                    if pos[1] != 0 and board[pos[0] - 1][pos[1] - 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-2, -2), limit=1)
-                    if pos[1] != 8 and board[pos[0] - 1][pos[1] + 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-2, 2), limit=1)
-                if pos[0] not in {4, 9}:  # Can move towards red base
-                    if pos[1] != 0 and board[pos[0] + 1][pos[1] - 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (2, -2), limit=1)
-                    if pos[1] != 8 and board[pos[0] + 1][pos[1] + 1] is None:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (2, 2), limit=1)
-            elif kind == 'a':
-                # Movement restricted in palace
-                if pos[0] not in {2, 9}:
-                    if pos[1] != 3:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (1, -1), limit=1)
-                    if pos[1] != 5:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (1, 1), limit=1)
-                if pos[0] not in {0, 7}:
-                    if pos[1] != 3:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-1, -1), limit=1)
-                    if pos[1] != 5:
-                        moves += self._find_moves_in_direction(board, pos, is_red, (-1, 1), limit=1)
-            elif kind == 'k':
-                # Movement restricted in palace
-                if pos[0] not in {2, 9}:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), limit=1)
-                if pos[0] not in {0, 7}:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), limit=1)
-                if pos[1] != 3:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
-                if pos[1] != 5:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
-                # Confront
-                if is_red:
-                    king_row = pos[0] - 1
-                    while king_row >= 0:
-                        if board[king_row][pos[1]] is not None:
-                            if board[king_row][pos[1]].kind == 'k':
-                                moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]), is_red))
-                            break
-                        king_row -= 1
-                else:  # not is_red
-                    king_row = pos[0] + 1
-                    while king_row <= 9:
-                        if board[king_row][pos[1]] is not None:
-                            if board[king_row][pos[1]].kind == 'k':
-                                moves.append(
-                                    _get_wxf_movement(board, pos, (king_row, pos[1]), is_red))
-                            break
-                        king_row += 1
-            elif kind == 'c':
-                moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), capture=False)
-                moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), capture=False)
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), capture=False)
-                moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), capture=False)
+            if piece.kind == 'r':
+                moves += self._calculate_moves_for_chariot(board, pos)
+            elif piece.kind == 'h':
+                moves += self._calculate_moves_for_horse(board, pos)
+            elif piece.kind == 'e':
+                moves += self._calculate_moves_for_elephant(board, pos)
+            elif piece.kind == 'a':
+                moves += self._calculate_moves_for_assistant(board, pos)
+            elif piece.kind == 'k':
+                moves += self._calculate_moves_for_king(board, pos)
+            elif piece.kind == 'c':
+                moves += self._calculate_moves_for_cannon(board, pos)
             else:  # kind == 'p'
-                if is_red:
-                    moves += self._find_moves_in_direction(board, pos, is_red, (-1, 0), limit=1)
-                    if pos[0] <= 4:  # Crossed the river
-                        moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
-                        moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
-                else:  # not is_red
-                    moves += self._find_moves_in_direction(board, pos, is_red, (1, 0), limit=1)
-                    if pos[0] >= 5:  # Crossed the river
-                        moves += self._find_moves_in_direction(board, pos, is_red, (0, 1), limit=1)
-                        moves += self._find_moves_in_direction(board, pos, is_red, (0, -1), limit=1)
+                moves += self._calculate_moves_for_pawn(board, pos)
+
+        return moves
+
+    def _calculate_moves_for_chariot(self, board: list[list[Optional[_Piece]]],
+                                     pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the chariot at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - a chariot is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 0))
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 0))
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, 1))
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, -1))
+
+        return moves
+
+    def _calculate_moves_for_horse(self, board: list[list[Optional[_Piece]]],
+                                   pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the horse at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - a horse is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        # The if-statements are 'horse-leg' condition checks
+        if pos[0] != 0 and board[pos[0] - 1][pos[1]] is None:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-2, 1), limit=1)
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-2, -1), limit=1)
+        if pos[0] != 9 and board[pos[0] + 1][pos[1]] is None:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (2, 1), limit=1)
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (2, -1), limit=1)
+        if pos[1] != 0 and board[pos[0]][pos[1] - 1] is None:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, -2), limit=1)
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, -2), limit=1)
+        if pos[1] != 8 and board[pos[0]][pos[1] + 1] is None:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 2), limit=1)
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 2), limit=1)
+
+        return moves
+
+    def _calculate_moves_for_elephant(self, board: list[list[Optional[_Piece]]],
+                                      pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the elephant at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - an elephant is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        if pos[0] not in {0, 5}:  # Can move towards black base
+            # The if-statements are 'elephant-leg' condition checks
+            if pos[1] != 0 and board[pos[0] - 1][pos[1] - 1] is None:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (-2, -2), limit=1)
+            if pos[1] != 8 and board[pos[0] - 1][pos[1] + 1] is None:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (-2, 2), limit=1)
+        if pos[0] not in {4, 9}:  # Can move towards red base
+            if pos[1] != 0 and board[pos[0] + 1][pos[1] - 1] is None:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (2, -2), limit=1)
+            if pos[1] != 8 and board[pos[0] + 1][pos[1] + 1] is None:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (2, 2), limit=1)
+
+        return moves
+
+    def _calculate_moves_for_assistant(self, board: list[list[Optional[_Piece]]],
+                                       pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the assistant at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - an assistant is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        # Movement restricted in palace
+        if pos[0] not in {2, 9}:
+            if pos[1] != 3:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, -1), limit=1)
+            if pos[1] != 5:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 1), limit=1)
+        if pos[0] not in {0, 7}:
+            if pos[1] != 3:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, -1), limit=1)
+            if pos[1] != 5:
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 1), limit=1)
+
+        return moves
+
+    def _calculate_moves_for_king(self, board: list[list[Optional[_Piece]]],
+                                  pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the king at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - a king is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        # Movement restricted in palace
+        if pos[0] not in {2, 9}:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 0), limit=1)
+        if pos[0] not in {0, 7}:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 0), limit=1)
+        if pos[1] != 3:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, -1), limit=1)
+        if pos[1] != 5:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, 1), limit=1)
+        # Confront check
+        if piece.is_red:
+            king_row = pos[0] - 1
+            while king_row >= 0:  # Search 'upwards' (index going down)
+                if board[king_row][pos[1]] is not None:
+                    if board[king_row][pos[1]].kind == 'k':  # Can confront other king
+                        moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]),
+                                                       piece.is_red))
+                    else:
+                        break
+                king_row -= 1  # Search the place right above in the next iteration
+        else:  # not is_red
+            king_row = pos[0] + 1
+            while king_row <= 9:  # Search 'downwards' (index going up)
+                if board[king_row][pos[1]] is not None:
+                    if board[king_row][pos[1]].kind == 'k':  # Can confront other king
+                        moves.append(
+                            _get_wxf_movement(board, pos, (king_row, pos[1]), piece.is_red))
+                    else:
+                        break
+                king_row += 1  # Search the place right below in the next iteration
+
+        return moves
+
+    def _calculate_moves_for_cannon(self, board: list[list[Optional[_Piece]]],
+                                    pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the cannon at the given position
+        on a given board with a given active player.
+
+        Note: the mechanism for cannon firing is written in ChessGame._find_moves_in_direction.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - a cannon is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 0), capture=False)
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 0), capture=False)
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, 1), capture=False)
+        moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, -1), capture=False)
+
+        return moves
+
+    def _calculate_moves_for_pawn(self, board: list[list[Optional[_Piece]]],
+                                  pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the pawn at the given position
+        on a given board with a given active player.
+
+        Preconditions:
+            - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+            - a pawn is on the given position of the board
+        """
+        piece = board[pos[0]][pos[1]]
+        moves = []  # accumulator
+
+        if piece.is_red:
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (-1, 0), limit=1)
+            if pos[0] <= 4:  # Crossed the river, so can move horizontally
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, 1), limit=1)
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, -1), limit=1)
+        else:  # not is_red
+            moves += self._find_moves_in_direction(board, pos, piece.is_red, (1, 0), limit=1)
+            if pos[0] >= 5:  # Crossed the river, so can move horizontally
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, 1), limit=1)
+                moves += self._find_moves_in_direction(board, pos, piece.is_red, (0, -1), limit=1)
 
         return moves
 
@@ -287,45 +436,48 @@ class ChessGame:
         >>> g._find_moves_in_direction(g._board, (6, 2), True, (-1, 0), capture=True, limit=1)
         ['p7+1']
         """
-        moves = []
+        moves = []  # accumulator
 
         kind = board[pos[0]][pos[1]].kind
         stop = False
         i = 1
-        while not stop:
+        while not stop:  # Keep searching to the given direction
+            # Add one step towards the given direction
             y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
 
             if x < 0 or y < 0 or x > 8 or y > 9:
                 break  # Out of bounds
 
-            contents = board[y][x]
+            contents = board[y][x]  # What's currently on the spot being searched
+
+            # Store this move first, will later decide whether to add this move to the accumulator
             move = _get_wxf_movement(board, pos, (y, x), is_red)
 
-            if contents is not None:
-                # point contains piece
-                stop = True
-                if kind == 'c':
+            if contents is not None:  # the spot being searched contains another piece
+                stop = True  # Can't move any further; this is the last iteration of the whlie loop
+                if kind == 'c':  # Check if this cannon can be fired in the given direction
                     i += 1
                     y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
-                    while 0 <= x <= 8 and 0 <= y <= 9:
+                    while 0 <= x <= 8 and 0 <= y <= 9:  # only check non-out-of-bound locations
                         if board[y][x] is not None and board[y][x].is_red == is_red:
-                            # Cannot fire cannon
+                            # Cannot fire cannon since it's blocked by an ally piece
                             break
                         if board[y][x] is not None and board[y][x].is_red != is_red:
-                            # Can fire cannon
+                            # Can fire cannon because found an opponent piece
                             moves.append(_get_wxf_movement(board, pos, (y, x), is_red))
                             break
                         i += 1
                         y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
 
+                # If this piece is allowed to capture, then add the move to the accumulator
                 if contents.is_red != is_red and capture is not False:
                     moves.append(move)
-            else:
-                # Empty square
+            else:  # Found an empty square, we can go there, so add the move to the accumulator
                 moves.append(move)
 
-            i += 1
+            i += 1  # Search for the next spot in the next iteration of the while loop
 
+            # For pieces that can only move by x steps, stop when the step limit is reached
             if limit is not None and i > limit:
                 stop = True
 
@@ -338,13 +490,14 @@ class ChessGame:
     def _board_after_move(self, move: str, is_red: bool) -> list[list[Optional[_Piece]]]:
         """Return a copy of self._board representing the state of the board after making move.
         """
-        board_copy = copy.deepcopy(self._board)
+        board_copy = copy.deepcopy(self._board)  # Deepcopy the board (no aliasing to self._board)
 
-        start_pos = _wxf_to_index(self._board, move[0:2], is_red)
-        end_pos = _get_index_movement(self._board, move, is_red)
+        start_pos = _wxf_to_index(self._board, move[0:2], is_red)  # Obtain which piece is moving
+        end_pos = _get_index_movement(self._board, move, is_red)  # Obtain to where the piece moves
 
+        # The destination is now occupied by the piece moving
         board_copy[end_pos[0]][end_pos[1]] = board_copy[start_pos[0]][start_pos[1]]
-        board_copy[start_pos[0]][start_pos[1]] = None
+        board_copy[start_pos[0]][start_pos[1]] = None  # The starting spot is now empty
 
         return board_copy
 
@@ -385,26 +538,31 @@ def print_board(board: list[list[Optional[_Piece]]]) -> None:
 
 
 def _print_row(board: list[list[Optional[_Piece]]], row: int) -> str:
-    """Returns the row representation at a given row of the board."""
+    """Returns the row representation at a given row of the board
+    This is a helper function for print board"""
     str_so_far = ''
+    # Since there are 9 columns in each row and the for loop iterates 8 times
+    # we will leave the last column separately.
     for i in range(0, 8):
         str_so_far += f'{_print_piece(board, row, i)}----'
+    # print the last column
     str_so_far += f'{_print_piece(board, row, 8)}'
     return str_so_far
 
 
 def _print_piece(board: list[list[Optional[_Piece]]], y: int, x: int) -> str:
-    """Returns the piece representation at the given coordinate of the board."""
-    piece = board[y][x]
-    try:
+    """Returns the piece representation at the given coordinate of the board.
+    This is a helper function of _print_row"""
+    piece = board[y][x]  # the coordinate of the piece
+    try:  # if the piece is not empty
         return PIECES[(piece.kind, piece.is_red)]
-    except AttributeError:
-        if x in {0, 8}:
+    except AttributeError:  # if the piece is empty
+        if x in {0, 8}:  # if it is in the left or right most of the column
             return '丨'
-        elif y in {0, 9}:
+        elif y in {0, 9}:  # if it is at the top or at the bottom of the row
             return '一'
         else:
-            return '十'
+            return '十'  # if it is inside the board
 
 
 def _get_index_movement(board: list[list[Optional[_Piece]]],
@@ -429,15 +587,18 @@ def _get_index_movement(board: list[list[Optional[_Piece]]],
     >>> _get_index_movement(board, 'c8-1', False)
     (1, 7)
     """
-    y, x = _wxf_to_index(board, move[0:2], is_red)
-    sign = move[2]
+    y, x = _wxf_to_index(board, move[0:2], is_red)  # the initial coordinate of the piece
+    sign = move[2]  # either + or - o
+    # if the move is horizontally, then it represents the final position of x coords.
+    # if the move is vertically, it represents the piece move by how much
+    # if the move is diagonal, it represents the final position of x coord
     value = int(move[3])
     piece = board[y][x]
     if sign == '.' and is_red:
-        return (y, 9 - value)
+        return (y, 9 - value)  # change the x coordinate of the piece when the piece is red and return
     elif sign == '.' and not is_red:
-        return (y, value - 1)
-    elif piece.kind in {'r', 'k', 'c', 'p'}:  # they all move vertically
+        return (y, value - 1)  # change the x coordinate of the piece when the piecblack red and return
+    elif piece.kind in {'r', 'k', 'c', 'p'}:  # they all move vert, change the y coords
         if is_red and sign == '+' or not is_red and sign == '-':
             return (y - value, x)
         else:  # black and -, or red and +
@@ -523,123 +684,132 @@ def _wxf_to_index(board: list[list[Optional[_Piece]]], piece: str, is_red: bool)
 
     Raise ValueError if not found.
 
+    Preconditions:
+        - board is a legal Chinese Chess board (e.g. there cannot be three red elephants, etc.)
+
     >>> g = ChessGame()
     >>> board = g.get_board()
     >>> _wxf_to_index(board, 'c2', True)
     (7, 7)
     >>> _wxf_to_index(board, 'a4', False)
     (0, 3)
-    >>> g.make_move('p1+1')  # Want the situation where three pawns are aligned vertically
-    >>> g.make_move('p9+1')
-    >>> g.make_move('p1+1')
-    >>> g.make_move('p7+1')
-    >>> g.make_move('p3+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('p3+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('c2+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('c2+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('c2+1')
-    >>> g.make_move('p5+1')
-    >>> g.make_move('c2+1')
-    >>> g.make_move('p1+1')
-    >>> g.make_move('c2-1')
-    >>> g.make_move('p5.4')
-    >>> g.make_move('c2-1')
-    >>> g.make_move('p4.3')
-    >>> g.make_move('c2-1')
-    >>> g.make_move('p1.2')
-    >>> g.make_move('c2-1')
-    >>> g.make_move('p2.3')
-    >>> board = g.get_board()
-    >>> _wxf_to_index(board, '13', True)
-    (2, 6)
-    >>> _wxf_to_index(board, '23', True)
-    (3, 6)
-    >>> _wxf_to_index(board, '33', True)
-    (4, 6)
     """
-    piece_lower = piece.lower()
-    piece_type = piece_lower[0]
-    location = piece_lower[1]
+    piece_lower = piece.lower()  # Lowercase the wxf notation of the piece for consistency
+    piece_type = piece_lower[0]  # Extract first letter/number
+    location = piece_lower[1]  # Extract second letter/number/symbol
 
-    if piece_type.isdigit():
-        y, x = 0, 0
-
-        locations_so_far = []
-        # Search the board
-        while y <= 9:
-            if board[y][x] == _Piece('p', is_red):
-                locations_so_far.append((y, x))
-            x += 1
-            if x >= 9:
-                y += 1
-                x = 0
-
-        x_values = [l[1] for l in locations_so_far]
-        mode = statistics.mode(x_values)
-        aligned_pieces = [l for l in locations_so_far if l[1] == mode]
-        aligned_pieces.sort()
-
-        if len(aligned_pieces) < 3:
-            raise ValueError('Invalid piece')
-
-        if is_red:
-            return aligned_pieces[int(piece_type) - 1]
-        else:
-            return aligned_pieces[-int(piece_type)]
-
-    if location in {'+', '-'}:
-        y, x = 0, 0
-
-        locations_so_far = []
-        # Search the board
-        while y <= 9:
-            if board[y][x] == _Piece(piece_type, is_red):
-                locations_so_far.append((y, x))
-            x += 1
-            if x >= 9:
-                y += 1
-                x = 0
-
-        coord1, coord2 = (), ()
-        out = False
-        for first_piece in locations_so_far:
-            for second_piece in locations_so_far:
-                if first_piece != second_piece and first_piece[1] == second_piece[1]:
-                    coord1, coord2 = sorted((first_piece, second_piece))
-                    out = True
-                    break
-            if out:
-                break
-
-        if coord1 == () and coord2 == ():
-            raise ValueError('Invalid piece')
-
-        if (is_red and location == '+') or (not is_red and location == '-'):
-            return coord1
-        else:
-            return coord2
+    if piece_type.isdigit():  # piece is one of the 3+ vertically aligned pieces
+        return _wxf_to_index_more_than_three_aligned(board, piece, is_red)
+    if location in {'+', '-'}:  # piece is one of the two vertically aligned pieces
+        return _wxf_to_index_two_aligned(board, piece, is_red)
     else:  # location is a number
         if is_red:
-            x = 9 - int(location)
+            x = 9 - int(location)  # Convert between wxf coords and index coords
         else:  # not is_red
-            x = int(location) - 1
+            x = int(location) - 1  # Convert between wxf coords and index coords
 
         y = 0
-        # Find the piece in the given column
+        # Find the piece in the given column (fixing the x-value)
         while y <= 9 and board[y][x] != _Piece(piece_type, is_red):
             y += 1
 
-        if y > 9:
+        if y > 9:  # Out of bound, piece not found
             print_board(board)
             print(piece)
             raise ValueError('Invalid piece')
-        else:
+        else:  # Piece is found, return it
             return (y, x)
+
+
+def _wxf_to_index_two_aligned(board: list[list[Optional[_Piece]]], piece: str,
+                              is_red: bool) -> tuple[int, int]:
+    """Return the coordinate of a piece (y, x) given the wxf notation for a piece (e.g. 'c6').
+
+    Raise ValueError if not found.
+
+    Preconditions:
+        - board is a legal Chinese Chess board (e.g. there cannot be three red elephants, etc.)
+        - piece represents one of the two vertically aligned pieces of the same kind, therefore:
+        - piece[1] in {'+', '-'}
+    """
+    piece_lower = piece.lower()  # Lowercase the wxf notation of the piece for consistency
+    piece_type = piece_lower[0]  # Extract first letter
+    location = piece_lower[1]  # Extract the second symbol
+
+    y, x = 0, 0
+
+    locations_so_far = []  # Accumulator
+    while y <= 9:  # Collect all the pieces of the given type
+        if board[y][x] == _Piece(piece_type, is_red):
+            locations_so_far.append((y, x))
+        x += 1
+        if x >= 9:  # Move onto the next row, reset to the first column
+            y += 1
+            x = 0
+
+    coord1, coord2 = (), ()
+    out = False
+
+    # Search for aligned pairs within all pieces of the given type
+    for first_piece in locations_so_far:
+        for second_piece in locations_so_far:
+            # If the pair is not the same piece and they are in the same column
+            if first_piece != second_piece and first_piece[1] == second_piece[1]:
+                # Sort them so coord1 has a smaller y-coordinate
+                coord1, coord2 = sorted((first_piece, second_piece))  # Get their coordinates
+                out = True  # Use to break outer loop
+                break  # Break inner loop
+        if out:
+            break  # Break outer loop
+
+    if coord1 == () and coord2 == ():  # Piece not found
+        raise ValueError('Invalid piece')
+
+    if (is_red and location == '+') or (not is_red and location == '-'):  # Want the 'upper' piece
+        return coord1  # Smaller y-value so it's the 'upper' piece
+    else:  # Want the 'lower' piece
+        return coord2  # Larger y-value so it's the 'lower' piece
+
+
+def _wxf_to_index_more_than_three_aligned(board: list[list[Optional[_Piece]]], piece: str,
+                                          is_red: bool) -> tuple[int, int]:
+    """Return the coordinate of a piece (y, x) given the wxf notation for a piece (e.g. 'c6').
+
+    Raise ValueError if not found.
+
+    Preconditions:
+        - board is a legal Chinese Chess board (e.g. there cannot be three red elephants, etc.)
+        - piece represents one of the 3+ vertically aligned pieces of the same kind, therefore:
+        - piece[0].isdigit()
+    """
+    piece_lower = piece.lower()  # Lowercase the wxf notation of the piece for consistency
+    piece_type = piece_lower[0]  # Extract first number
+
+    y, x = 0, 0
+
+    locations_so_far = []  # Accumulator
+    while y <= 9:  # Collect all the pieces of the given type
+        if board[y][x] == _Piece('p', is_red):
+            locations_so_far.append((y, x))
+        x += 1
+        if x >= 9:  # Move onto the next row, reset to the first column
+            y += 1
+            x = 0
+
+    x_values = [l[1] for l in locations_so_far]
+    # There is at most 5 pieces of the same kind, so to get the 3+ in the same column,
+    # we take the mode of its x-value
+    mode = statistics.mode(x_values)
+    aligned_pieces = [l for l in locations_so_far if l[1] == mode]
+    aligned_pieces.sort()  # In order of increasing x-value (index)
+
+    if len(aligned_pieces) < 3:  # We don't have 3 pieces in the same column
+        raise ValueError('Invalid piece')
+
+    if is_red:
+        return aligned_pieces[int(piece_type) - 1]  # First one has index 0 in aligned_pieces
+    else:
+        return aligned_pieces[-int(piece_type)]  # First one is the last in aligned_pieces
 
 
 def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_red: bool) -> str:
@@ -669,12 +839,12 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
             pieces.append((y, x))
         y += 1
 
-    if len(pieces) == 1:
+    if len(pieces) == 1:  # there is only one piece with the same type
         if is_red:
             return piece_type + str(9 - x)
         else:  # not is_red
             return piece_type + str(x + 1)
-    elif len(pieces) == 2:
+    elif len(pieces) == 2:  # there are 2 pieces on the board with the same type
         if (is_red and pieces.index((pos[0], pos[1])) == 1) \
                 or (not is_red and pieces.index((pos[0], pos[1])) == 0):
             return piece_type + '-'
@@ -689,7 +859,6 @@ def _index_to_wxf(board: list[list[Optional[_Piece]]], pos: tuple[int, int], is_
 
 def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
     """Calculate the absolute points for the given board.
-
     Each piece on the board holds a certain value and all pieces on the board will be
     accounted in calculating relative points. Red pieces contribute to positive points and
     black pieces contribute to negative points. Different types of pieces have different values:
@@ -701,93 +870,228 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
         - Advisor: 200
         - Pawn (after crossing river): 200
         - Pawn (before crossing river): 100
-
     Preconditions:
         - board is in the format as defined previously.
     """
-    point_dict = {'k': 10000, 'r': 900, 'c': 450, 'h': 400, 'e': 200, 'a': 200,
-                  'pa': 200, 'pb': 100}
     points_so_far = 0
     for pos in [(y, x) for y in range(0, 10) for x in range(0, 9)]:
         piece = board[pos[0]][pos[1]]
         if piece is None:
             continue
-        else:  # if there is a piece
-            # Determine whether to add or subtract points
-            if piece.is_red:
-                side = 1
-            else:
-                side = -1
+        else:
+            if piece.kind == 'p':
+                points_so_far += _absolute_pawn(board, pos)
+            elif piece.kind == 'h':
+                points_so_far += _absolute_horse(board, pos)
+            elif piece.kind == 'e':
+                points_so_far += _absolute_elephant(board, pos)
+            elif piece.kind == 'c':
+                points_so_far += _absolute_cannon(board, pos)
+            elif piece.kind == 'r':
+                points_so_far += _absolute_chariot(board, pos)
+            elif piece.kind == 'k':
+                points_so_far += _absolute_king(board, pos)
+            else:  # piece.kind == 'a'
+                points_so_far += _absolute_advisor(board, pos)
+    return points_so_far
 
-            if piece.kind != 'p':
-                points_so_far += point_dict[piece.kind] * side
-            else:  # kind is pawn
-                if (piece.is_red and pos[0] <= 4) or (not piece.is_red and pos[0] >= 5):
-                    points_so_far += point_dict['pa'] * side
-                else:  # the pawn did not cross the river
-                    points_so_far += point_dict['pb'] * side
 
-        # Below are location-based evaluations
+def _absolute_pawn(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all pawns on the board. If the pawn does not cross river, it is 100 points.
+    Otherwise, it is 200 points
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - a pawn is on the given position of the board
+    """
+    points_so_far = 0
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
 
-        # Cannon in the middle check
-        if pos[1] == 4 and pos[0] in {3, 4, 5} and piece == _Piece('c', True):
-            points_so_far += 60
-        elif pos[1] == 4 and pos[0] in {4, 5, 6} and piece == _Piece('c', False):
-            points_so_far -= 60
+    if (piece.is_red and pos[0] <= 4) or (not piece.is_red and pos[0] >= 5):
+        points_so_far += 200 * side
+    else:
+        points_so_far += 100 * side
 
-        # Cannon in the back check
-        if pos[0] == 0 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', True):
-            points_so_far += 30
-        elif pos[0] == 9 and pos[1] in {0, 1, 7, 8} and piece == _Piece('c', False):
-            points_so_far -= 30
+    return points_so_far
 
-        # Head pawn existence check
-        if pos[1] == 4 and pos[0] == 6 and piece == _Piece('p', True):
-            points_so_far += 10
-        elif pos[1] == 4 and pos[0] == 3 and piece == _Piece('p', False):
-            points_so_far -= 10
 
-        # Horse in the barn check
-        if pos[0] == 1 and pos[1] in {2, 6} and piece == _Piece('h', True):
-            points_so_far += 70
-        elif pos[0] == 8 and pos[1] in {2, 6} and piece == _Piece('h', False):
-            points_so_far -= 70
+def _absolute_horse(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all pawns on the board, each horse is 400 points.
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
 
-        # Horse in the palace check
-        if pos[0] == 2 and pos[1] in {3, 5} and piece == _Piece('h', True):
-            points_so_far += 30
-        elif pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('h', False):
-            points_so_far -= 30
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - a horse is on the given position of the board
+    """
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
 
-        # Elephant on-guard check
-        if pos[0] == 7 and pos[1] == 4 and piece == _Piece('e', True):
-            points_so_far += 20
-        elif pos[0] == 2 and pos[1] == 4 and piece == _Piece('e', False):
-            points_so_far -= 20
+    points_so_far = side * 400
 
-        # Elephant off-guard penalty
-        if pos[0] == 7 and pos[1] in {0, 8} and piece == _Piece('e', True):
-            points_so_far -= 10
-        elif pos[0] == 2 and pos[1] in {0, 8} and piece == _Piece('e', False):
-            points_so_far += 10
+    # Horse in the barn check
+    if pos[0] == 1 and pos[1] in {2, 6} and side == 1:
+        points_so_far += 70
+    elif pos[0] == 8 and pos[1] in {2, 6} and side == -1:
+        points_so_far -= 70
 
-        # Assistant off-guard penalty
-        if pos[0] == 7 and pos[1] in {3, 5} and piece == _Piece('a', True):
-            points_so_far -= 10
-        elif pos[0] == 2 and pos[1] in {3, 5} and piece == _Piece('a', False):
-            points_so_far += 10
+    # Horse in the palace check
+    if pos[0] == 2 and pos[1] in {3, 5} and side == 1:
+        points_so_far += 30
+    elif pos[0] == 7 and pos[1] in {3, 5} and side == -1:
+        points_so_far -= 30
 
-        # King unprotected penalty
-        if pos[0] in {7, 8} and piece == _Piece('k', True):
-            points_so_far -= 10
-        elif pos[0] in {1, 2} and piece == _Piece('k', False):
-            points_so_far += 10
+    return points_so_far
 
-        # Chariot stuck penalty
-        if pos[0] == 9 and pos[1] in {0, 8} and piece == _Piece('r', True):
-            points_so_far -= 10
-        elif pos[0] == 0 and pos[1] in {0, 8} and piece == _Piece('r', False):
-            points_so_far += 10
+
+def _absolute_elephant(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all elephants on the board, each elephant is 200 points'
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - an elephant is on the given position of the board
+    """
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
+
+    points_so_far = side * 200
+
+    # Elephant on-guard check
+    if pos[0] == 7 and pos[1] == 4 and side == 1:
+        points_so_far += 20
+    elif pos[0] == 2 and pos[1] == 4 and side == -1:
+        points_so_far -= 20
+
+    # Elephant off-guard penalty
+    if pos[0] == 7 and pos[1] in {0, 8} and side == 1:
+        points_so_far -= 10
+    elif pos[0] == 2 and pos[1] in {0, 8} and side == -1:
+        points_so_far += 10
+
+    return points_so_far
+
+
+def _absolute_cannon(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all cannons on the board, each cannon is 450 points.
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - an cannon is on the given position of the board
+    """
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
+
+    points_so_far = side * 450
+
+    # Cannon in the middle check
+    if pos[1] == 4 and pos[0] in {3, 4, 5} and side == 1:
+        points_so_far += 60
+    elif pos[1] == 4 and pos[0] in {4, 5, 6} and side == -1:
+        points_so_far -= 60
+
+    # Cannon in the back check
+    if pos[0] == 0 and pos[1] in {0, 1, 7, 8} and side == 1:
+        points_so_far += 30
+    elif pos[0] == 9 and pos[1] in {0, 1, 7, 8} and side == -1:
+        points_so_far -= 30
+
+    return points_so_far
+
+
+def _absolute_king(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all cannons on the board, each cannon is 450 points.
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - an cannon is on the given position of the board
+    """
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
+
+    points_so_far = side * 10000
+
+    # King unprotected penalty
+    if pos[0] in {7, 8} and side == 1:
+        points_so_far -= 10
+    elif pos[0] in {1, 2} and side == -1:
+        points_so_far += 10
+
+    return points_so_far
+
+
+def _absolute_chariot(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all chariot on the board, each chariot is 900 points.
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - an cannon is on the given position of the board
+    """
+    points_so_far = 0
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
+
+    points_so_far = side * 900
+
+    # Chariot stuck penalty
+    if pos[0] == 9 and pos[1] in {0, 8} and side == 1:
+        points_so_far -= 10
+    elif pos[0] == 0 and pos[1] in {0, 8} and side == -1:
+        points_so_far += 10
+
+    return points_so_far
+
+
+def _absolute_advisor(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
+    """Calculate the points for all advisor on the board, each advisor is 200 points.
+    Red pieces contribute to positive points and
+    black pieces contribute to negative points.
+
+    Preconditions:
+        - board must be in a legal state (e.g. cannot have three red cannons, etc.)
+        - an advisor is on the given position of the board
+    """
+    points_so_far = 0
+    piece = board[pos[0]][pos[1]]
+    if piece.is_red:
+        side = 1
+    else:
+        side = -1
+
+    points_so_far = side * 200
+
+    # Assistant off-guard penalty
+    if pos[0] == 7 and pos[1] in {3, 5} and side == 1:
+        points_so_far -= 10
+    elif pos[0] == 2 and pos[1] in {3, 5} and side == -1:
+        points_so_far += 10
 
     return points_so_far
 

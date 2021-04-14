@@ -3,22 +3,25 @@
 Module Description
 ===============================
 
-This Python module contains training functions for AI Player.
+This Python module contains functions that can be
+used to train a LearningPlayer (a Player subclass
+found in player.py).
 
 Copyright and Usage Information
 ===============================
 
-This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao, Jenci Wei
 """
 import chess_game
 from chess_game import ChessGame
 import game_tree
-from player import LearningPlayer
+from player import LearningPlayer, AIBlack, ExploringPlayer
+import game_run
 
 RECORDING_RATE = 0.5
 
 
-def training_for_probability(tree_file: str, number: int, depth: int) -> None:
+def train_exploring_for_probability(tree_file: str, number: int, depth: int) -> None:
     """Train the AI Player with iterations in tree_file number times, using LearningPlayer with
     exploring depth being depth.
 
@@ -64,7 +67,7 @@ def training_for_probability(tree_file: str, number: int, depth: int) -> None:
     game_tree.tree_to_xml(tree, tree_file)
 
 
-def training_for_points(xml_file: str, number: int, depth: int, turns: int) -> None:
+def train_exploring_for_points(xml_file: str, number: int, depth: int, turns: int) -> None:
     """Train the AI Player with tree in tree_file number iterations, using LearningPlayer with
     exploring depth being depth.
 
@@ -114,12 +117,31 @@ def training_for_points(xml_file: str, number: int, depth: int, turns: int) -> N
     game_tree.tree_to_xml(tree, xml_file)
 
 
+def train_black_ai(file: str, depth: int, iterations: int) -> None:
+    """Train the black ai by expanding the tree stored in file.
+
+    This function creates an AIBlack player with the given file and the given depth. This function
+    also creates an exploring player of depth 3. <iterations> number of games will be run between
+    them and the tree will be stored after each game.
+
+    Preconditions:
+        - file represents a valid game tree
+        - depth > 0
+        - iterations > 0
+    """
+    for _ in range(iterations):
+        ai_player = AIBlack(file, depth)
+        exploring_player = ExploringPlayer(4)
+        game_run.run_games(1, exploring_player, ai_player, True)
+        ai_player.store_tree()
+
+
 if __name__ == '__main__':
     # We will get two files. The smaller one ('data/tree_for_prob.xml') has good
     # win probability estimation and the larger one ('data/tree_for_points.xml') has
     # lots of nodes with relative points
 
-    # If this is your firs time run this file, uncomment line 131 to 134
+    # If this is your firs time run this file, uncomment line 145 to 150
     # training_tree = game_tree.load_game_tree('data/moves.csv')
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_prob.xml')
 
@@ -130,18 +152,18 @@ if __name__ == '__main__':
     # You need to choose and set player.EPSILON and game_tree.ESTIMATION
 
     # Firstly, run the following block of code
-    # training_for_probability('data/tree_for_prob.xml', number=2000, depth=3)
+    # train_exploring_for_probability('data/tree_for_prob.xml', number=2000, depth=3)
     # prob_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # prob_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(prob_tree, 'data/tree_for_prob.xml')
 
     # Then, run the following block of code
-    # # choose number of trainings, depth for LearningPlayer and
-    # # the depth (turns) of the generated tree
-    # training_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
+    # choose number of trainings, depth for LearningPlayer and
+    # the depth (turns) of the generated tree
+    # train_exploring_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
 
-    # import python_ta.contracts
-    # python_ta.contracts.check_all_contracts()
+    import python_ta.contracts
+    python_ta.contracts.check_all_contracts()
 
     import python_ta
     python_ta.check_all(config={

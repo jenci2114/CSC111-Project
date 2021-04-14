@@ -3,14 +3,16 @@
 Module Description
 ===============================
 
-This Python module contains
-1. GameTree class
-2. functions to read csv and xml files, build game trees and store game trees
+This Python module contains the GameTree class, which stores
+various attributes for Chinese Chess moves. Also, this module
+contains functions that convert between the aforementioned
+GameTree class and xml files, where xml files are used to store
+preexisting GameTrees.
 
 Copyright and Usage Information
 ===============================
 
-This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao and Jenci Wei
+This file is Copyright (c) 2021 Junru Lin, Zixiu Meng, Krystal Miao, Jenci Wei
 """
 
 
@@ -44,7 +46,8 @@ class GameTree:
                                  of the game.
 
     Note: red_win_probability is calculated from Red's view and black_win_probability
-    is calculated from Black's view. See more explanations in self._update_win_probabilities.
+    is calculated from Black's view. 1.0 means red/black can win for sure and 0.0
+    means inconclusive.
 
     Representation Invariants:
         - self.move == GAME_START_MOVE or self.move is a valid chess move
@@ -103,7 +106,7 @@ class GameTree:
         self._update_win_probabilities()
 
     def clean_subtrees(self) -> None:
-        """Clean all the subtrees of the tree.
+        """Remove all the subtrees of self.
 
         >>> tree = GameTree()
         >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
@@ -122,7 +125,7 @@ class GameTree:
         self._subtrees = []
 
     def clean_depth_subtrees(self, depth: int) -> None:
-        """Clean all the subtrees after depth of depth.
+        """Remove all the subtrees after depth of <depth>.
 
         Precondition:
             - depth >= 1
@@ -143,9 +146,9 @@ class GameTree:
             b -> Red's move
         <BLANKLINE>
         """
-        if depth == 1:
+        if depth == 1:  # Depth reached remove all subtrees
             self.clean_subtrees()
-        else:
+        else:  # Depth not reached. Recurse downwards.
             for subtree in self._subtrees:
                 subtree.clean_depth_subtrees(depth - 1)
 
@@ -155,13 +158,22 @@ class GameTree:
         Preconditions:
             - Must be a tree of depth at least 1
         """
-        if self._subtrees == []:
+        if self._subtrees == []:  # Base case: we have a leaf. Return the current depth.
             return curr_depth
-        else:
+        else:  # Recursive step: return the greatest depth among the subtrees
             return max(sub.get_height(curr_depth + 1) for sub in self._subtrees)
 
     def __str__(self) -> str:
         """Return a string representation of this tree.
+        >>> tree = GameTree()
+        >>> tree.insert_move_sequence(['a', 'b', 'c', 'd'], [1, 2, 3, 4])
+        >>> print(tree)
+        * -> Red's move
+          a -> Black's move
+            b -> Red's move
+              c -> Black's move
+                d -> Red's move
+        <BLANKLINE>
         """
         return self._str_indented(0)
 
@@ -174,11 +186,13 @@ class GameTree:
             turn_desc = "Red's move"
         else:
             turn_desc = "Black's move"
+
+        # Indicate the current move -> who's turn is it next
         move_desc = f'{self.move} -> {turn_desc}\n'
-        s = '  ' * depth + move_desc
-        if self._subtrees == []:
+        s = '  ' * depth + move_desc  # Indentation for depth
+        if self._subtrees == []:  # Base case: print the string representation
             return s
-        else:
+        else:  # Recursive step: also print the string representations of the subtrees
             for subtree in self._subtrees:
                 s += subtree._str_indented(depth + 1)
             return s
@@ -192,8 +206,6 @@ class GameTree:
             - moves: a list of moves in a game, with several red-black turns
             - points: a lisyt of the relative points of the game, corresponding to the games
                       after each move in moves
-            - update_win_probability: True if we need to update the win probability of the tree
-                                      after inserting the move sequence
 
         The inserted moves form a chain of descendants, where:
             - moves[0] is a child of this tree's root
@@ -253,14 +265,14 @@ class GameTree:
 
             # there is no early return after the for loop and we need to create a new subtree
             if self.is_red_move:
-                # should be Black
+                # should be Black next
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=False,
                                           relative_points=relative_point,
                                           red_win_probability=red_win_probability,
                                           black_win_probability=black_win_probability))
             else:
-                # should be Red
+                # should be Red next
                 self.add_subtree(GameTree(move=curr_move,
                                           is_red_move=True,
                                           relative_points=relative_point,
@@ -311,6 +323,7 @@ class GameTree:
                 self.black_win_probability = sum(top_chances) / half_len
             else:
                 self.black_win_probability = max(subtrees_win_prob_black)
+                # Averages the top ESTIMATION of the opponent's moves
                 half_len = math.ceil(len(subtrees_win_prob_red) * ESTIMATION)
                 top_chances = sorted(subtrees_win_prob_red, reverse=True)[:half_len]
                 self.red_win_probability = sum(top_chances) / half_len
@@ -318,12 +331,13 @@ class GameTree:
 
     def purge(self) -> None:
         """Remove duplicate subtrees (if there is any)."""
-        moves_so_far = []
+        moves_so_far = []  # accumulator
         for subtree in self._subtrees:
-            if subtree.move in moves_so_far:  # this is a duplicate
-                self._subtrees.remove(subtree)
+            if subtree.move in moves_so_far:  # this is a duplicate, so:
+                self._subtrees.remove(subtree)  # remove the subtree
+                # and merge with the subtree with the same move
                 self.find_subtree_by_move(subtree.move).merge_with(subtree)
-            else:
+            else:  # No duplicates yet, store the move in the accumulator
                 moves_so_far.append(subtree.move)
 
     def reevaluate(self) -> None:
@@ -334,12 +348,12 @@ class GameTree:
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
         """
-        self.purge()
+        self.purge()  # First purge any duplicates
         if self._subtrees == []:  # Base case, self is a leaf
             return  # we already have the points and win possibilities
         else:  # Recursive step
             for subtree in self._subtrees:
-                subtree.reevaluate()
+                subtree.reevaluate()  # Recurse and re-evaluate the subtrees
 
                 # At this point, all subtrees of the loop variable subtree is reevaluated.
                 if subtree._subtrees != []:  # not a leaf, then we calculate based on its subtrees
@@ -387,15 +401,18 @@ class GameTree:
                 z -> Red's move
         <BLANKLINE>
         """
-        assert self.move == other_tree.move
+        assert self.move == other_tree.move  # They must have the same root moves
         subtrees_moves = [sub.move for sub in self._subtrees]
         for subtree in other_tree.get_subtrees():
-            if subtree.move in subtrees_moves:
+            if subtree.move in subtrees_moves:  # we already have the move, so
+                # recurse down into their subtrees
                 index = subtrees_moves.index(subtree.move)
                 self._subtrees[index].merge_with(subtree)
-            else:
+            else:  # we don't have the move yet, so add it
                 self.add_subtree(subtree)
 
+        # Now the two trees are merged. Re-evaluate the large tree so that its
+        # attributes are consistent (with all the leaf values)
         self.reevaluate()
 
 
@@ -457,9 +474,10 @@ def load_game_tree(games_file: str) -> GameTree:
         sequence_so_far = []  # collect the red-black turn of game
         points_so_far = []  # the relative point corresponding to sequence_so_far
 
-        for turn in game:
+        for turn in game:  # turn is a list of two moves (red-black) or one move (red)
             sequence_so_far += turn
         for move in sequence_so_far:
+            # simulate a move in game to get the point after this move
             new_game.make_move(move)
             board = new_game.get_board()
             points_so_far.append(chess_game.calculate_absolute_points(board))
@@ -488,15 +506,15 @@ def tree_to_xml(tree: GameTree, filename: str) -> None:
     Precondition:
         - filename has suffix .xml
     """
-    bool_dict = {True: 't', False: 'f'}
+    bool_dict = {True: 't', False: 'f'}  # For shortening the xml file
     root = ET.Element('GameTree')
     root_move = ET.SubElement(root, 'm', m=str(tree.move), i=bool_dict[tree.is_red_move],
                               p=str(tree.relative_points),
                               r=str(tree.red_win_probability), b=str(tree.black_win_probability))
     _build_e_tree(root_move, tree)
 
-    xml_tree = ET.ElementTree(root)
-    xml_tree.write(filename)
+    xml_tree = ET.ElementTree(root)  # Make <root> the root of an ElementTree
+    xml_tree.write(filename)  # Store the ElementTree as file
 
 
 def _build_e_tree(root_move: ET.Element, tree: GameTree) -> None:
@@ -504,8 +522,8 @@ def _build_e_tree(root_move: ET.Element, tree: GameTree) -> None:
 
     This function mutates its input Element.
     """
-    bool_dict = {True: 't', False: 'f'}
-    for subtree in tree.get_subtrees():
+    bool_dict = {True: 't', False: 'f'}  # For shortening the xml file
+    for subtree in tree.get_subtrees():  # Build the ElementTree for each subtree and recurse down
         move = ET.SubElement(root_move, 'm', m=str(subtree.move),
                              i=bool_dict[subtree.is_red_move],
                              p=str(subtree.relative_points),
@@ -515,15 +533,15 @@ def _build_e_tree(root_move: ET.Element, tree: GameTree) -> None:
 
 
 def xml_to_tree(filename: str) -> GameTree:
-    """Load the specified xml file and convert it into a GameTree.
+    """Return a game tree which is stored in the specified xml file.
 
     Precondition:
         - filename must be a file generated by the tree_to_xml function
     """
     tree = GameTree()
     with open(filename) as file:
-        e_tree = ET.parse(file)
-        root_move = e_tree.getroot()[0]
+        e_tree = ET.parse(file)  # Convert the xml file into an ElementTree
+        root_move = e_tree.getroot()[0]  # There is only 1 root move (*), which is in index 0
         _build_game_tree(root_move, tree)
 
     return tree
@@ -534,14 +552,17 @@ def _build_game_tree(move: ET.Element, tree: GameTree) -> None:
 
     This function mutates its input tree.
     """
-    tree.move = move.attrib['m']
-    tree.is_red_move = move.attrib['i'] == 't'
-    tree.relative_points = int(move.attrib['p'])
+    tree.move = move.attrib['m']  # Extract GameTree.move attribute
+    tree.is_red_move = move.attrib['i'] == 't'  # Extract GameTree.is_red_move attribute
+    tree.relative_points = int(move.attrib['p'])  # Extract GameTree.relative_points attribute
+
+    # Extract GameTree.red_win_probability and GameTree.black_win_probability attribute
     tree.red_win_probability = float(move.attrib['r'])
     tree.black_win_probability = float(move.attrib['b'])
+
     for child_move in move:
         subtree = GameTree()
-        _build_game_tree(child_move, subtree)
+        _build_game_tree(child_move, subtree)  # Recurse into subtrees
         tree.add_subtree(subtree)
 
 
