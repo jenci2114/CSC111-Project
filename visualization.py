@@ -411,7 +411,7 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
 
 if __name__ == '__main__':
     from player import ExploringPlayer
-    g = Game(ExploringPlayer(3))
+    g = Game(ExploringPlayer(3), True, True)
     g.run()
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
