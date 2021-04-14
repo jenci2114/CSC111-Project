@@ -21,6 +21,8 @@ def present() -> None:
     music and/or sound effects.
     """
     print('In our project, you will fight the AIs we made in Chinese Chess.')
+    print('You will play as the \033[91mred player\33[0m. '
+          'Good luck and hopefully you can beat our AI!')
     print('Please indicate which AI you would like to fight against:')
     print("Enter '1' for a beginner-level AI")
     print("'2' for a novice-level AI")
