@@ -17,7 +17,6 @@ import multiprocessing
 import random
 import os
 from typing import Optional
-import game_run
 from chess_game import ChessGame, calculate_absolute_points
 from game_tree import GameTree, xml_to_tree, tree_to_xml
 
@@ -29,14 +28,17 @@ class Player:
     """An abstract class representing a Chinese Chess AI.
 
     This class can be subclassed to implement different strategies for playing chess.
+
+    Instance Attributes:
+        - xml_file: the xml file that stores the game tree
+
+    Representation Invariants:
+        - xml_file represents a valid xml file that stores a GameTree
     """
     # Private Instance Attributes:
-    #   - _game_tree:
-    #       The GameTree that this player uses to make its moves. If None, then this
-    #       player just makes random moves.
-    #   - _xml_file: the xml file that stores the game tree
+    #   - _game_tree: the GameTree that this player uses to make its moves.
+    xml_file: str
     _game_tree: Optional[GameTree]
-    _xml_file: str
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -76,19 +78,22 @@ class RandomPlayer(Player):
 
 class ExploringPlayer(Player):
     """A Chinese Chess player that uses alpha-beta algorithm to explore all possible moves
-     and find a locally optimal move.( The explanation of alpha-beta algorithm will be
-     explained below)
+    and find a locally optimal move.( The explanation of alpha-beta algorithm will be
+    explained below)
 
-     If there is more than one optimal move, then randomly choose a move with the highest
-     relative point.
+    If there is more than one optimal move, then randomly choose a move with the highest
+    relative point.
 
-     Note: This player does not need an existing tree to select a moves from.
-     Instead, it will explore all recent moves and choose a locally optimal.
+    Note: This player does not need an existing tree to select a moves from.
+    Instead, it will explore all recent moves and choose a locally optimal.
 
+    Instance Attributes:
+        - depth: the number of turns the player will explore
+
+    Representation Invariants:
+        - self.depth > 0
     """
-    # Private Instance Attributes:
-    #   - _depth: the number of turns the player will explore
-    _depth: int
+    depth: int
 
     def __init__(self, depth: int, tree: GameTree = GameTree()) -> None:
         """Initialize this player.
@@ -97,7 +102,7 @@ class ExploringPlayer(Player):
             - depth >= 1
         """
         self._game_tree = tree
-        self._depth = depth
+        self.depth = depth
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
         """Make a move given the current game.
@@ -114,10 +119,10 @@ class ExploringPlayer(Player):
             self._game_tree = GameTree(previous_move, game.is_red_move())
 
         # Non-multiprocessing version
-        # best_score = self._alpha_beta(game, self._game_tree, self._depth, -1000000, 1000000)
+        # best_score = self._alpha_beta(game, self._game_tree, self.depth, -1000000, 1000000)
 
         # Obtain subtrees with the best point
-        best_score = self._alpha_beta_multi(game, self._depth, -1000000, 1000000)
+        best_score = self._alpha_beta_multi(game, self.depth, -1000000, 1000000)
         subtrees = self._game_tree.get_subtrees()
         candidate_subtrees = [s for s in subtrees if s.relative_points == best_score]
 
@@ -385,14 +390,17 @@ class LearningPlayer(Player):
         - if the largest win probability of moves in subtrees > EPSILON, then the player will
           choose this move
         - else, the player will use the alpha-beta algorithm to explore a locally optimal move
-          with depth of self._depth
+          with depth of self.depth
 
     Note: This player will be used for training.
 
+    Instance Attributes:
+        - depth: the number of turns the player will explore
+
+    Representation Invariants:
+        - self.depth > 0
     """
-    # Private Instance Attributes:
-    #   - _depth: the number of turns the player will explore
-    _depth: int
+    depth: int
 
     def __init__(self, depth: int, xml_file: str) -> None:
         """Initialize this player.
@@ -401,8 +409,8 @@ class LearningPlayer(Player):
             - depth >= 1
             - xml file contains a game tree at the initial state (root is '*')
         """
-        self._depth = depth
-        self._xml_file = xml_file
+        self.depth = depth
+        self.xml_file = xml_file
         self.reload_tree()
 
     def make_move(self, game: ChessGame, previous_move: Optional[str]) -> str:
@@ -457,10 +465,10 @@ class LearningPlayer(Player):
         """A helper function for self.make_move, which is called when the player will
         perform the same as ExploringPlayer.
 
-        Note: The depth for ExploringPlayer is the same as self._depth.
+        Note: The depth for ExploringPlayer is the same as self.depth.
         """
         # initialize an exploring player
-        explore = ExploringPlayer(self._depth)
+        explore = ExploringPlayer(self.depth)
         move = explore.make_move(game, previous_move)
         if self._game_tree is None:
             self._game_tree = explore.get_two_depth_tree()
@@ -471,7 +479,7 @@ class LearningPlayer(Player):
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
         try:
-            self._game_tree = xml_to_tree(self._xml_file)
+            self._game_tree = xml_to_tree(self.xml_file)
         except FileNotFoundError:
             self._game_tree = GameTree()
 
@@ -500,15 +508,21 @@ class Human(Player):
 
 
 class AIBlack(Player):
-    """An AI chess player that always play as Black."""
+    """An AI chess player that always play as Black.
+
+    Instance Attributes:
+        - depth: the number of turns the player will explore
+
+    Representation Invariants:
+        - self.depth > 0
+    """
     # Private Instance Attributes:
-    #   - _depth: the number of turns the player will explore
     #   - _current_tree: the GameTree consisting of all moves searched by this player
     #   - _current_subtree: offspring of _current_tree that keeps track of the current game move
-
+    #
     # Private Representation Invariants:
     #   - self._current_tree is not None
-    _depth: int
+    depth: int
     _current_tree: GameTree
     _current_subtree: GameTree
 
@@ -518,8 +532,8 @@ class AIBlack(Player):
         Preconditions:
             - xml_file can be converted to a tree that has nodes for the Black side
         """
-        self._xml_file = xml_file
-        self._depth = depth
+        self.xml_file = xml_file
+        self.depth = depth
         self._current_tree = GameTree()
         self._current_subtree = self._current_tree
 
@@ -533,7 +547,7 @@ class AIBlack(Player):
         if self._game_tree is None or self._game_tree.get_subtrees() == []:
             # there is no existing possible moves in self._game_tree
             # use exploring player
-            explorer = ExploringPlayer(self._depth)
+            explorer = ExploringPlayer(self.depth)
             move = explorer.make_move(game, previous_move)
             new_subtree = explorer.get_tree()
             # add the new tree explored two self._current_subtree
@@ -582,13 +596,13 @@ class AIBlack(Player):
         print('Merging trees...')
         self._game_tree.merge_with(self._current_tree)
         print('Storing tree...')
-        tree_to_xml(self._game_tree, self._xml_file)
+        tree_to_xml(self._game_tree, self.xml_file)
         print('Success.')
 
     def reload_tree(self) -> None:
         """Reload the tree from the xml file as self._game_tree."""
         try:
-            self._game_tree = xml_to_tree(self._xml_file)
+            self._game_tree = xml_to_tree(self.xml_file)
         except FileNotFoundError:
             self._game_tree = None
 

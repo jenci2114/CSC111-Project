@@ -41,16 +41,20 @@ def present() -> None:
     bgm_option = input()
     if bgm_option == 'y':
         bgm = True
+        print('Background music enabled.')
     else:
         bgm = False
+        print('Background music disabled.')
 
     print("Enter 'y' (just the letter) if you want sound effects. "
           "Enter anything else otherwise.")
     sfx_option = input()
     if sfx_option == 'y':
         sfx = True
+        print('Sound effects enabled.')
     else:
         sfx = False
+        print('Sound effects disabled.')
 
     if option == '3':
         g = Game(AIBlack('tree.xml', 3), bgm, sfx)

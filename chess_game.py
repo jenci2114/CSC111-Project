@@ -870,6 +870,18 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
         - Advisor: 200
         - Pawn (after crossing river): 200
         - Pawn (before crossing river): 100
+    Additionally, the locations of certain pieces affect the absolute points (which are based
+    on the discussion of group members):
+        - The horse being in the 'barn' will be awarded bonus points (+70)
+        - The horse being on the diagonal of opponent's palace will be awarded bonus points (+30)
+        - The elephant being 'on-guard' will be awarded bonus points (+20)
+        - The elephant being 'off-guard' will be penalized (-10)
+        - The cannon being in the middle will be awarded bonus points (+60)
+        - The cannon being in the back end of opponent's side will be awarded bonus points (+30)
+        - The king not being on the bottom line will be penalized (-10)
+        - The chariot being stuck in the corner will be penalized (-10)
+        - The advisor being 'off-guard' will be penalized (-10)
+
     Preconditions:
         - board is in the format as defined previously.
     """
@@ -897,10 +909,11 @@ def calculate_absolute_points(board: list[list[Optional[_Piece]]]) -> int:
 
 
 def _absolute_pawn(board: list[list[Optional[_Piece]]], pos: tuple[int, int]) -> int:
-    """Calculate the points for all pawns on the board. If the pawn does not cross river, it is 100 points.
-    Otherwise, it is 200 points
+    """Calculate the points for all pawns on the board. If the pawn does not cross river,
+    it is 100 points. Otherwise, it is 200 points
     Red pieces contribute to positive points and
     black pieces contribute to negative points.
+
     Preconditions:
         - board must be in a legal state (e.g. cannot have three red cannons, etc.)
         - a pawn is on the given position of the board
@@ -1051,7 +1064,6 @@ def _absolute_chariot(board: list[list[Optional[_Piece]]], pos: tuple[int, int])
         - board must be in a legal state (e.g. cannot have three red cannons, etc.)
         - an cannon is on the given position of the board
     """
-    points_so_far = 0
     piece = board[pos[0]][pos[1]]
     if piece.is_red:
         side = 1
@@ -1078,7 +1090,6 @@ def _absolute_advisor(board: list[list[Optional[_Piece]]], pos: tuple[int, int])
         - board must be in a legal state (e.g. cannot have three red cannons, etc.)
         - an advisor is on the given position of the board
     """
-    points_so_far = 0
     piece = board[pos[0]][pos[1]]
     if piece.is_red:
         side = 1

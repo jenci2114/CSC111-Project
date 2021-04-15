@@ -39,11 +39,14 @@ class GameTree:
         - move: the current chess move (expressed in wxf notation), or '*' if this tree
                 represents the start of a game
         - is_red_move: True if Red is to make the next move after this, False otherwise
-        - relative_points: the points of Red minus the points of Black
+        - relative_points: related to absolute points as defined in calculate_absolute_points in
+                           chess_game.py. For more information, see GameTree.reevaluate.
         - red_win_probability: the probability that Red will win from the current state
-                               of the game.
+                               of the game. For more information, see
+                               GameTree._update_win_probabilities
         - black_win_probability: the probability that Black will win from the current state
-                                 of the game.
+                                 of the game. For more information, see
+                                 GameTree._update_win_probabilities
 
     Note: red_win_probability is calculated from Red's view and black_win_probability
     is calculated from Black's view. 1.0 means red/black can win for sure and 0.0
@@ -344,6 +347,11 @@ class GameTree:
         """Re-evaluate the relative points and win-probabilities of this tree.
 
         For the function that calculates the absolute points for one board, see chess_game.py.
+
+        The relative points of a certain GameTree is defined by:
+            - The absolute points of the board after the move, if the subtree is a leaf
+            - The highest relative points among its subtrees, if red (the maximizer) is to move next
+            - The least relative points among its subtrees, if black (the minimizer) is to move next
 
         This method will recurse all the way to the leaves to obtain the points and the
         probabilities, then pass it back to each of the parents, going over the entire tree.
