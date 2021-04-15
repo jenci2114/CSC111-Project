@@ -233,9 +233,11 @@ class Game:
         """Run the game."""
         # Initialize chess game
         self._print_game()
-        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
-        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
+        red_status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
+        self._screen.blit(IMAGE_DICT['possible_move_frame'], red_status_rect)
         pygame.display.flip()
+
+        black_status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 515))
 
         if self.music:  # Load the background music
             pygame.mixer.music.load('chessboard/sound/background_music.mp3')
@@ -273,19 +275,23 @@ class Game:
                             pygame.display.flip()
                             continue
                         # change the status on the board
-                        self._make_a_move(wxf_move, status_rect, True)
+                        self._make_a_move(wxf_move, red_status_rect, black_status_rect, True)
                         if self._check_for_end():  # check whether the game is ended
                             continue
 
                         # Computer's turn
                         # choose a move
                         opponent_wxf_move = self.opponent.make_move(self._game, wxf_move)
+                        self._curr_coord = _wxf_to_index(self._game.get_board(), opponent_wxf_move,
+                                                         False)
                         # change the status on the board
-                        self._make_a_move(opponent_wxf_move, status_rect, False)
+                        self._make_a_move(opponent_wxf_move, black_status_rect, red_status_rect,
+                                          False)
                         if self._check_for_end():  # check whether the game is ended
                             continue
 
-    def _make_a_move(self, wxf_move: str, status_rect: tuple, is_red: bool) -> None:
+    def _make_a_move(self, wxf_move: str, old_status_rect: tuple, new_status_rect,
+                     is_red: bool) -> None:
         """Make a move on the pygame board based on wxf_move.
 
         NOte: This is a helper function for self.run.
@@ -318,11 +324,10 @@ class Game:
         # Clear the light displaying current status
         status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
         status_clear.fill((181, 184, 191))
-        self._screen.blit(status_clear, status_rect)
+        self._screen.blit(status_clear, old_status_rect)
 
         # Show the new status light
-        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 515))
-        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
+        self._screen.blit(IMAGE_DICT['possible_move_frame'], new_status_rect)
         pygame.display.flip()
 
     def _print_game(self) -> None:
@@ -395,21 +400,23 @@ class Game:
         text = text_dict[winner]
         color = color_dict[winner]
         # print the result of the game
-        message = FONT_DICT['font_bold'].render(text, True, color)
+        message = FONT_DICT['font_bold'].render(text, True, color)  # Text
         message_rect = message.get_rect(center=(280, 300))
-        message_surface = pygame.Surface(message.get_size())
+        message_surface = pygame.Surface(message.get_size())  # Background for text
+        message_surface.fill(COLOR_DICT['white'])
+        message_surface.set_alpha(200)  # Make background translucent
         self._screen.blit(message_surface, message_rect)
         self._screen.blit(message, message_rect)
         # print the closing message
-        closing_message = FONT_DICT['font'].render('Please close this window.', True, color)
+        closing_message = FONT_DICT['font'].render('Please close this window.', True, color)  # Text
         closing_message_rect = closing_message.get_rect(center=(280, 350))
-        closing_message_surface = pygame.Surface(closing_message.get_size())
+        closing_message_surface = pygame.Surface(closing_message.get_size())  # Background for text
+        closing_message_surface.fill(COLOR_DICT['white'])
+        closing_message_surface.set_alpha(200)  # Make background translucent
         self._screen.blit(closing_message_surface, closing_message_rect)
         self._screen.blit(closing_message, closing_message_rect)
-        # Make the window white, with alpha being 200
-        message_surface.fill(COLOR_DICT['white'])
-        message_surface.set_alpha(200)
-        pygame.display.flip()
+
+        pygame.display.flip()  # Update display
 
 
 def coordinate_to_pixel(coordinate: tuple[int, int]) -> tuple[int, int]:
@@ -439,7 +446,7 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
 
 if __name__ == '__main__':
     from player import ExploringPlayer, AIBlack
-    g = Game(ExploringPlayer(3))
+    g = Game(ExploringPlayer(3), True, True)
     g.run()
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
