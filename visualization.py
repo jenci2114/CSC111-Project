@@ -235,11 +235,9 @@ class Game:
         self._print_game()
         status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
         self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
-
         pygame.display.flip()
 
-        if self.music:
-            # Load the background music
+        if self.music:  # Load the background music
             pygame.mixer.music.load('chessboard/sound/background_music.mp3')
             pygame.mixer.music.play(-1)
 
@@ -253,10 +251,12 @@ class Game:
                     return
                 elif event.type == pygame.MOUSEBUTTONDOWN \
                         and not self._ready_to_move and not self._game_ended:
+                    # print possible moves
                     self._get_possible_moves_for_piece(event.pos)
                     pygame.display.flip()
                 elif event.type == pygame.MOUSEBUTTONDOWN \
                         and self._ready_to_move and not self._game_ended:
+                    # make a move or unselect a piece
                     new_coordinate = pixel_to_coordinate((event.pos[0], event.pos[1]))
                     if new_coordinate not in self._movement_indices:  # Unselect this piece
                         self._print_game()
@@ -264,6 +264,7 @@ class Game:
                         pygame.display.flip()
                     else:  # Make the move!
                         try:
+                            # get the wxf of the chosen move
                             wxf_move = _get_wxf_movement(self._game.get_board(),
                                                          self._curr_coord, new_coordinate, True)
                         except ValueError:  # A pygame error occurred! Reset to previous state.
@@ -271,84 +272,58 @@ class Game:
                             self._ready_to_move = False
                             pygame.display.flip()
                             continue
-
-                        destination = _get_index_movement(self._game.get_board(), wxf_move, True)
-
-                        pieces_before = piece_count(self._game.get_board())
-                        self._game.make_move(wxf_move)
-                        pieces_after = piece_count(self._game.get_board())
-                        if self.sfx and pieces_before != pieces_after:
-                            SOUND_DICT['capture_sound'].play()
-                        self._print_game()
-                        if self.sfx:
-                            SOUND_DICT['move_sound'].play()
-
-                        # Mark where the piece was before the move
-                        piece_frame_coord = coordinate_to_pixel(self._curr_coord)
-                        piece_frame_rect = IMAGE_DICT['selected_frame'].get_rect(
-                            center=piece_frame_coord)
-                        self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_rect)
-
-                        # Mark where the piece is right now
-                        piece_frame_coord_after = coordinate_to_pixel(destination)
-                        piece_frame_after_rect = IMAGE_DICT['selected_frame'].get_rect(
-                            center=piece_frame_coord_after)
-                        self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_after_rect)
-
-                        # Clear the light displaying current status
-                        status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
-                        status_clear.fill((181, 184, 191))
-                        self._screen.blit(status_clear, status_rect)
-
-                        # Show the new status light
-                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 515))
-                        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
-                        pygame.display.flip()
-
-                        if self._check_for_end():
+                        # change the status on the board
+                        self._make_a_move(wxf_move, status_rect, True)
+                        if self._check_for_end():  # check whether the game is ended
                             continue
 
                         # Computer's turn
+                        # choose a move
                         opponent_wxf_move = self.opponent.make_move(self._game, wxf_move)
-                        opponent_piece_coord = _wxf_to_index(self._game.get_board(),
-                                                             opponent_wxf_move[0:2], False)
-
-                        opponent_destination = _get_index_movement(self._game.get_board(),
-                                                                   opponent_wxf_move, False)
-
-                        self._game.make_move(opponent_wxf_move)
-                        if self.sfx:
-                            SOUND_DICT['move_sound'].play()
-                        pieces_after_opponent = piece_count(self._game.get_board())
-                        if self.sfx and pieces_after != pieces_after_opponent:
-                            SOUND_DICT['capture_sound'].play()
-                        self._print_game()
-
-                        # Mark where the piece was before the move
-                        opponent_piece_frame_coord = coordinate_to_pixel(opponent_piece_coord)
-                        opponent_piece_frame_rect = \
-                            IMAGE_DICT['selected_frame'].get_rect(center=opponent_piece_frame_coord)
-                        self._screen.blit(IMAGE_DICT['selected_frame'], opponent_piece_frame_rect)
-
-                        # Mark where the piece is right now
-                        opponent_piece_frame_coord_after = coordinate_to_pixel(opponent_destination)
-                        opponent_piece_frame_after_rect = IMAGE_DICT['selected_frame'].get_rect(
-                            center=opponent_piece_frame_coord_after)
-                        self._screen.blit(IMAGE_DICT['selected_frame'],
-                                          opponent_piece_frame_after_rect)
-
-                        # Clear the light displaying current status
-                        status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
-                        status_clear.fill((181, 184, 191))
-                        self._screen.blit(status_clear, status_rect)
-
-                        # Show the new status light
-                        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 465))
-                        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
-                        pygame.display.flip()
-
-                        if self._check_for_end():
+                        # change the status on the board
+                        self._make_a_move(opponent_wxf_move, status_rect, False)
+                        if self._check_for_end():  # check whether the game is ended
                             continue
+
+    def _make_a_move(self, wxf_move: str, status_rect: tuple, is_red: bool) -> None:
+        """Make a move on the pygame board based on wxf_move.
+
+        NOte: This is a helper function for self.run.
+        """
+        # change wxf move to index move
+        destination = _get_index_movement(self._game.get_board(), wxf_move, is_red)
+        pieces_before = piece_count(self._game.get_board())  # the number of pieces before move
+        self._game.make_move(wxf_move)
+        pieces_after = piece_count(self._game.get_board())  # the number of pieces after move
+        if self.sfx:  # Add sound
+            if pieces_before != pieces_after:  # there is a capture
+                SOUND_DICT['capture_sound'].play()
+            else:  # there is no capture
+                SOUND_DICT['move_sound'].play()
+        # update the status of board on the pygame window
+        self._print_game()
+
+        # Mark where the piece was before the move
+        piece_frame_coord = coordinate_to_pixel(self._curr_coord)
+        piece_frame_rect = IMAGE_DICT['selected_frame'].get_rect(
+            center=piece_frame_coord)
+        self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_rect)
+
+        # Mark where the piece is after move
+        piece_frame_coord_after = coordinate_to_pixel(destination)
+        piece_frame_after_rect = IMAGE_DICT['selected_frame'].get_rect(
+            center=piece_frame_coord_after)
+        self._screen.blit(IMAGE_DICT['selected_frame'], piece_frame_after_rect)
+
+        # Clear the light displaying current status
+        status_clear = pygame.Surface(IMAGE_DICT['possible_move_frame'].get_size())
+        status_clear.fill((181, 184, 191))
+        self._screen.blit(status_clear, status_rect)
+
+        # Show the new status light
+        status_rect = IMAGE_DICT['possible_move_frame'].get_rect(center=(620, 515))
+        self._screen.blit(IMAGE_DICT['possible_move_frame'], status_rect)
+        pygame.display.flip()
 
     def _print_game(self) -> None:
         """Print the current state of the game."""
@@ -397,60 +372,44 @@ class Game:
     def _check_for_end(self) -> bool:
         """Check (and return) whether the game ended. If so, stop the game and print who won."""
         if self._game.get_winner() is not None:
-            if self._game.get_winner() == 'Red':
-                self._game_ended = True
-                # Display winning message
-                message = FONT_DICT['font_bold'].render('Congratulations! You won!', True,
-                                                         COLOR_DICT['red'])
-                message_rect = message.get_rect(center=(280, 300))
-                message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(COLOR_DICT['white'])
-                message_surface.set_alpha(200)
-                self._screen.blit(message_surface, message_rect)
-                self._screen.blit(message, message_rect)
-                # Sets colour for closing message
-                closing_message = FONT_DICT['font'].render('Please close this window.', True,
-                                                            COLOR_DICT['red'])
-            elif self._game.get_winner() == 'Black':
-                self._game_ended = True
-                # Display losing message
-                message = FONT_DICT['font_bold'].render('Too bad. You lost.', True,
-                                                         COLOR_DICT['black'])
-                message_rect = message.get_rect(center=(280, 300))
-                message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(COLOR_DICT['white'])
-                message_surface.set_alpha(200)
-                self._screen.blit(message_surface, message_rect)
-                self._screen.blit(message, message_rect)
-                # Sets colour for closing message
-                closing_message = FONT_DICT['font'].render('Please close this window.', True,
-                                                            COLOR_DICT['black'])
-            else:  # self._game.get_winner() == 'Draw'
-                self._game_ended = True
-                # Display draw message
-                message = FONT_DICT['font_bold'].render('No one won.', True, COLOR_DICT['blue'])
-                message_rect = message.get_rect(center=(280, 300))
-                message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(COLOR_DICT['white'])
-                message_surface.set_alpha(200)
-                self._screen.blit(message_surface, message_rect)
-                self._screen.blit(message, message_rect)
-                # Sets colour for closing message
-                closing_message = FONT_DICT['font'].render('Please close this window.', True,
-                                                            COLOR_DICT['blue'])
-
-            # Instructs the player to close the window
-            closing_message_rect = closing_message.get_rect(center=(280, 350))
-            closing_message_surface = pygame.Surface(closing_message.get_size())
-            closing_message_surface.fill(COLOR_DICT['white'])
-            closing_message_surface.set_alpha(200)
-            self._screen.blit(closing_message_surface, closing_message_rect)
-            self._screen.blit(closing_message, closing_message_rect)
-            pygame.display.flip()
+            self._game_ended = True
+            self._print_result(self._game.get_winner())
         else:
             pass
 
         return self._game_ended
+
+    def _print_result(self, winner: str) -> None:
+        """Print the result of the game.
+
+        Note: This is a helper function for self._check_for_end.
+
+        Precondition:
+            - winner in {'Red', 'Black', 'Draw'}
+        """
+        text_dict = {'Red': 'Congratulations! You won!',
+                     'Black': 'Too bad. You lost.',
+                     'Draw': 'No one won.'}
+        color_dict = {'Red': 'red', 'Black': 'black', 'Draw': 'blue'}
+        # decide the text and color based on the winner
+        text = text_dict[winner]
+        color = color_dict[winner]
+        # print the result of the game
+        message = FONT_DICT['font_bold'].render(text, True, color)
+        message_rect = message.get_rect(center=(280, 300))
+        message_surface = pygame.Surface(message.get_size())
+        self._screen.blit(message_surface, message_rect)
+        self._screen.blit(message, message_rect)
+        # print the closing message
+        closing_message = FONT_DICT['font'].render('Please close this window.', True, color)
+        closing_message_rect = closing_message.get_rect(center=(280, 350))
+        closing_message_surface = pygame.Surface(closing_message.get_size())
+        self._screen.blit(closing_message_surface, closing_message_rect)
+        self._screen.blit(closing_message, closing_message_rect)
+        # Make the window white, with alpha being 200
+        message_surface.fill(COLOR_DICT['white'])
+        message_surface.set_alpha(200)
+        pygame.display.flip()
 
 
 def coordinate_to_pixel(coordinate: tuple[int, int]) -> tuple[int, int]:
