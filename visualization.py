@@ -48,6 +48,8 @@ class Game:
     def __init__(self, player: Player, music: bool = False, sfx: bool = False) -> None:
         """Initialize the game."""
         pygame.init()
+
+        # Initialize the attributes
         self.opponent = player
         self.music = music
         self.sfx = sfx
@@ -57,8 +59,34 @@ class Game:
         self._ready_to_move = False
         self._movement_indices = []
         self._game_ended = False
-        pygame.display.set_caption('Chinese Chess!')
 
+        # set caption and change the icon
+        pygame.display.set_caption('Chinese Chess!')
+        self._change_icon()
+
+        # Initialize some global variables used for storing images, sounds, colors, and fonts
+        global IMAGE_DICT
+        global SOUND_DICT
+        global COLOR_DICT
+        global FONT_DICT
+        IMAGE_DICT = self._load_images()
+        SOUND_DICT = self._load_sound()
+        COLOR_DICT = self._define_color()
+        FONT_DICT = self._define_font()
+
+        # Display background
+        self._screen.fill(COLOR_DICT['background_color'])
+        self.display_instructions()
+
+    def _load_images(self) -> dict:
+        """Load the images for the game, and return a dictionary of them.
+
+        The keys of the dictionary are tuples, with the first element being
+        the name of the piece and the second element being the sides.
+        The values of the dictionary are the corresponding images.
+
+        Note: this method is used when initializing the class.
+        """
         # Load images
         board_image = pygame.image.load('chessboard/board/004.jpg')
         coord_image = pygame.image.load('chessboard/board/xy2.png')
@@ -79,21 +107,40 @@ class Game:
         possible_move_frame = pygame.image.load('chessboard/piece/mask.png')
         selected_frame = pygame.image.load('chessboard/piece/mm.png')
 
-        # Change icon
-        icon = pygame.Surface(black_elephant.get_size())
-        icon.blit(black_elephant, (0, 0))
-        pygame.display.set_icon(icon)
+        # return a dictionary with key being tuples and values being the corresponding image
+        return {('r', False): black_chariot, ('h', False): black_horse,
+                ('e', False): black_elephant, ('a', False): black_advisor,
+                ('k', False): black_king, ('c', False): black_cannon,
+                ('p', False): black_pawn, ('r', True): red_chariot,
+                ('h', True): red_horse, ('e', True): red_elephant,
+                ('a', True): red_advisor, ('k', True): red_king,
+                ('c', True): red_cannon, ('p', True): red_pawn,
+                'board_image': board_image, 'coord_image': coord_image,
+                'possible_move_frame': possible_move_frame, 'selected_frame': selected_frame}
 
-        # Load sound and music
+    def _load_sound(self) -> dict:
+        """Load sound, and return a dictionary storing them.
+
+        check_sound: the sound for clicking a red piece when it's red's turn
+        move_sound: the sound for moving a piece, used for both sides
+        capture_sound: the sound for capturing a piece, used for both sides
+
+        Note: this method is used when initializing the class.
+        """
+        # Load sound
         check_sound = pygame.mixer.Sound('chessboard/sound/check.wav')
         move_sound = pygame.mixer.Sound('chessboard/sound/move.wav')
         capture_sound = pygame.mixer.Sound('chessboard/sound/capture.wav')
 
-        # Load font
-        font_bold = pygame.font.SysFont('American Typewriter', 36, bold=True)
-        font = pygame.font.SysFont('American Typewriter', 24)
-        text = pygame.font.SysFont('Arial', 24)
+        return {'check_sound': check_sound,
+                'move_sound': move_sound,
+                'capture_sound': capture_sound}
 
+    def _define_color(self) -> dict:
+        """Define colors that will be used in the game, and return a dictionary storing them.
+
+        Note: this method is used when initializing the class.
+        """
         # Define RGB colours & display background
         black = (0, 0, 0)
         red = (255, 0, 0)
@@ -101,63 +148,77 @@ class Game:
         white = (255, 255, 255)
         background_color = (181, 184, 191)
 
-        global IMAGE_DICT
-        IMAGE_DICT = {('r', False): black_chariot, ('h', False): black_horse,
-                      ('e', False): black_elephant, ('a', False): black_advisor,
-                      ('k', False): black_king, ('c', False): black_cannon,
-                      ('p', False): black_pawn, ('r', True): red_chariot, ('h', True): red_horse,
-                      ('e', True): red_elephant, ('a', True): red_advisor, ('k', True): red_king,
-                      ('c', True): red_cannon, ('p', True): red_pawn, 'board_image': board_image,
-                      'coord_image': coord_image, 'possible_move_frame': possible_move_frame,
-                      'selected_frame': selected_frame, 'check_sound': check_sound,
-                      'move_sound': move_sound, 'capture_sound': capture_sound,
-                      'font_bold': font_bold, 'font': font, 'text': text, 'black': black,
-                      'red': red, 'blue': blue, 'white': white}
+        return {'black': black,
+                'red': red,
+                'blue': blue,
+                'white': white,
+                'background_color': background_color}
 
-        # Display background
-        self._screen.fill(background_color)
-        self.display_instructions()
+    def _define_font(self) -> dict:
+        """Define the font for the game interaction surface, and return a dictionary storing them.
+
+        Note: this method is used when initializing the class.
+        """
+        # Load font
+        font_bold = pygame.font.SysFont('American Typewriter', 36, bold=True)
+        font = pygame.font.SysFont('American Typewriter', 24)
+        text = pygame.font.SysFont('Arial', 24)
+
+        return {'font_bold': font_bold, 'font': font, 'text': text}
+
+    def _change_icon(self) -> None:
+        """Change the icon to the black elephant and set the font.
+
+        Note: this method is used when initializing the class.
+        """
+        # Set the icon as the black elephant
+        # Load the black elephant image
+        black_elephant = pygame.image.load('chessboard/piece/bb.png')
+        # Change icon
+        icon = pygame.Surface(black_elephant.get_size())
+        icon.blit(black_elephant, (0, 0))
+        pygame.display.set_icon(icon)
 
     def display_instructions(self) -> None:
         """Display the instructions and the status bar on the right side of the board."""
         # Instructions display
-        instruction_1 = IMAGE_DICT['text'].render('Instructions', True, IMAGE_DICT['black'])
+        instruction_1 = FONT_DICT['text'].render('Instructions', True, COLOR_DICT['black'])
         instruction_1_rect = instruction_1.get_rect(topleft=(600, 50))
         self._screen.blit(instruction_1, instruction_1_rect)
-        instruction_2 = IMAGE_DICT['text'].render('During your turn, click', True,
-                                                  IMAGE_DICT['black'])
+        instruction_2 = FONT_DICT['text'].render('During your turn, click', True,
+                                                  COLOR_DICT['black'])
         instruction_2_rect = instruction_2.get_rect(topleft=(600, 100))
         self._screen.blit(instruction_2, instruction_2_rect)
-        instruction_3 = IMAGE_DICT['text'].render('one of your pieces to get', True,
-                                                  IMAGE_DICT['black'])
+        instruction_3 = FONT_DICT['text'].render('one of your pieces to get', True,
+                                                  COLOR_DICT['black'])
         instruction_3_rect = instruction_3.get_rect(topleft=(600, 140))
         self._screen.blit(instruction_3, instruction_3_rect)
-        instruction_4 = IMAGE_DICT['text'].render('all of its valid moves.', True,
-                                                  IMAGE_DICT['black'])
+        instruction_4 = FONT_DICT['text'].render('all of its valid moves.', True,
+                                                  COLOR_DICT['black'])
         instruction_4_rect = instruction_4.get_rect(topleft=(600, 180))
         self._screen.blit(instruction_4, instruction_4_rect)
-        instruction_5 = IMAGE_DICT['text'].render('Then click on the desired', True,
-                                                  IMAGE_DICT['black'])
+        instruction_5 = FONT_DICT['text'].render('Then click on the desired', True,
+                                                  COLOR_DICT['black'])
         instruction_5_rect = instruction_5.get_rect(topleft=(600, 220))
         self._screen.blit(instruction_5, instruction_5_rect)
-        instruction_6 = IMAGE_DICT['text'].render('location to make move or', True,
-                                                  IMAGE_DICT['black'])
+        instruction_6 = FONT_DICT['text'].render('location to make move or', True,
+                                                  COLOR_DICT['black'])
         instruction_6_rect = instruction_6.get_rect(topleft=(600, 260))
         self._screen.blit(instruction_6, instruction_6_rect)
-        instruction_7 = IMAGE_DICT['text'].render('click anywhere else to', True,
-                                                  IMAGE_DICT['black'])
+        instruction_7 = FONT_DICT['text'].render('click anywhere else to', True,
+                                                  COLOR_DICT['black'])
         instruction_7_rect = instruction_7.get_rect(topleft=(600, 300))
         self._screen.blit(instruction_7, instruction_7_rect)
-        instruction_8 = IMAGE_DICT['text'].render('deselect the piece.', True, IMAGE_DICT['black'])
+        instruction_8 = FONT_DICT['text'].render('deselect the piece.', True, COLOR_DICT['black'])
         instruction_8_rect = instruction_8.get_rect(topleft=(600, 340))
         self._screen.blit(instruction_8, instruction_8_rect)
 
         # Current status display
-        your_move = IMAGE_DICT['font'].render('Your move', True, IMAGE_DICT['red'])
+        your_move = FONT_DICT['font'].render('Your move', True, COLOR_DICT['red'])
         your_move_rect = your_move.get_rect(topleft=(650, 450))
         self._screen.blit(your_move, your_move_rect)
 
-        opponent_move = IMAGE_DICT['font'].render("Opponent's move", True, IMAGE_DICT['red'])
+        opponent_move = FONT_DICT['font'].render("Opponent's move", True, COLOR_DICT['red'])
         opponent_move_rect = opponent_move.get_rect(topleft=(650, 500))
         self._screen.blit(opponent_move, opponent_move_rect)
 
@@ -210,10 +271,10 @@ class Game:
                         self._game.make_move(wxf_move)
                         pieces_after = piece_count(self._game.get_board())
                         if self.sfx and pieces_before != pieces_after:
-                            IMAGE_DICT['capture_sound'].play()
+                            SOUND_DICT['capture_sound'].play()
                         self._print_game()
                         if self.sfx:
-                            IMAGE_DICT['move_sound'].play()
+                            SOUND_DICT['move_sound'].play()
 
                         # Mark where the piece was before the move
                         piece_frame_coord = coordinate_to_pixel(self._curr_coord)
@@ -250,10 +311,10 @@ class Game:
 
                         self._game.make_move(opponent_wxf_move)
                         if self.sfx:
-                            IMAGE_DICT['move_sound'].play()
+                            SOUND_DICT['move_sound'].play()
                         pieces_after_opponent = piece_count(self._game.get_board())
                         if self.sfx and pieces_after != pieces_after_opponent:
-                            IMAGE_DICT['capture_sound'].play()
+                            SOUND_DICT['capture_sound'].play()
                         self._print_game()
 
                         # Mark where the piece was before the move
@@ -322,7 +383,7 @@ class Game:
             self._screen.blit(IMAGE_DICT['possible_move_frame'], frame_rect)
 
         if self.sfx:
-            IMAGE_DICT['check_sound'].play()
+            SOUND_DICT['check_sound'].play()
 
         self._ready_to_move = True
 
@@ -332,49 +393,49 @@ class Game:
             if self._game.get_winner() == 'Red':
                 self._game_ended = True
                 # Display winning message
-                message = IMAGE_DICT['font_bold'].render('Congratulations! You won!', True,
-                                                         IMAGE_DICT['red'])
+                message = FONT_DICT['font_bold'].render('Congratulations! You won!', True,
+                                                         COLOR_DICT['red'])
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(IMAGE_DICT['white'])
+                message_surface.fill(COLOR_DICT['white'])
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = IMAGE_DICT['font'].render('Please close this window.', True,
-                                                            IMAGE_DICT['red'])
+                closing_message = FONT_DICT['font'].render('Please close this window.', True,
+                                                            COLOR_DICT['red'])
             elif self._game.get_winner() == 'Black':
                 self._game_ended = True
                 # Display losing message
-                message = IMAGE_DICT['font_bold'].render('Too bad. You lost.', True,
-                                                         IMAGE_DICT['black'])
+                message = FONT_DICT['font_bold'].render('Too bad. You lost.', True,
+                                                         COLOR_DICT['black'])
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(IMAGE_DICT['white'])
+                message_surface.fill(COLOR_DICT['white'])
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = IMAGE_DICT['font'].render('Please close this window.', True,
-                                                            IMAGE_DICT['black'])
+                closing_message = FONT_DICT['font'].render('Please close this window.', True,
+                                                            COLOR_DICT['black'])
             else:  # self._game.get_winner() == 'Draw'
                 self._game_ended = True
                 # Display draw message
-                message = IMAGE_DICT['font_bold'].render('No one won.', True, IMAGE_DICT['blue'])
+                message = FONT_DICT['font_bold'].render('No one won.', True, COLOR_DICT['blue'])
                 message_rect = message.get_rect(center=(280, 300))
                 message_surface = pygame.Surface(message.get_size())
-                message_surface.fill(IMAGE_DICT['white'])
+                message_surface.fill(COLOR_DICT['white'])
                 message_surface.set_alpha(200)
                 self._screen.blit(message_surface, message_rect)
                 self._screen.blit(message, message_rect)
                 # Sets colour for closing message
-                closing_message = IMAGE_DICT['font'].render('Please close this window.', True,
-                                                            IMAGE_DICT['blue'])
+                closing_message = FONT_DICT['font'].render('Please close this window.', True,
+                                                            COLOR_DICT['blue'])
 
             # Instructs the player to close the window
             closing_message_rect = closing_message.get_rect(center=(280, 350))
             closing_message_surface = pygame.Surface(closing_message.get_size())
-            closing_message_surface.fill(IMAGE_DICT['white'])
+            closing_message_surface.fill(COLOR_DICT['white'])
             closing_message_surface.set_alpha(200)
             self._screen.blit(closing_message_surface, closing_message_rect)
             self._screen.blit(closing_message, closing_message_rect)
