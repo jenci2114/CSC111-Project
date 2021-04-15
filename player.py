@@ -233,6 +233,7 @@ class ExploringPlayer(Player):
             - depth >= 0
         """
         if game.get_winner() is not None:
+            # Set win probabilities
             if game.get_winner() == 'Red':
                 side = 1
                 tree.red_win_probability = 1.0
@@ -257,32 +258,34 @@ class ExploringPlayer(Player):
             return value
 
         if game.is_red_move():
-            value = -1000000
+            value = -1000000  # Initial value for maximizer (negative infinity)
             for move in game.get_valid_moves():
                 subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
+                # Red is the maximizing player, so choose the greatest value
                 value = max(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
-                alpha = max(alpha, value)
+                alpha = max(alpha, value)  # Greatest score so far
                 tree.add_subtree(subtree)
-                if alpha >= beta:
+                if alpha >= beta:  # Opponent not going to allow this move, see docstring
                     break  # beta cutoff
 
-            tree.relative_points = value
+            tree.relative_points = value  # Store value to tree
             return value
         else:  # Black's move
-            value = 1000000
+            value = 1000000  # Initial value for minimizer (negative infinity)
             for move in game.get_valid_moves():
                 subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
+                # Black is the minimizing player, so choose the least value
                 value = min(value, self._alpha_beta(game_after_move, subtree, depth - 1,
                                                     alpha, beta))
-                beta = min(beta, value)
+                beta = min(beta, value)  # Least score so far
                 tree.add_subtree(subtree)
-                if beta <= alpha:
+                if beta <= alpha:  # Opponent not going to allow this move, see docstring
                     break  # alpha cutoff
 
-            tree.relative_points = value
+            tree.relative_points = value  # Store value to tree
             return value
 
     def _alpha_beta_multi(self, game: ChessGame, depth: int,
@@ -299,30 +302,38 @@ class ExploringPlayer(Player):
             - depth > 0
             - Game has not finished
         """
-        processes = []
+        processes = []  # Accumulator that keeps track of the processes
         moves = game.get_valid_moves()
-        per_process, last_process = divmod(len(moves), PROCESSES - 1)
-        start, end = 0, per_process
 
-        for i in range(PROCESSES):
+        # Divide the task (total number of moves to search for) into <PROCESSES> pieces, where
+        # the first <PROCESSES - 1> processes search for <per_process> moves, and the
+        # last processes search for <last_process> moves
+        per_process, last_process = divmod(len(moves), PROCESSES - 1)
+        start, end = 0, per_process  # Loop variable for the below for loop, representing
+        # indices of the moves to be searched
+
+        for i in range(PROCESSES):  # Iterate <PROCESSES> times, thus creating <PROCESSES> processes
+            # Create a process, running self._alpha_beta_process, parameters are listed in <args>
             process = multiprocessing.Process(target=self._alpha_beta_process,
                                               args=(game, depth, alpha, beta, start, end))
-            processes.append(process)
-            process.start()
+            processes.append(process)  # Keep track of this process, so we can remove it later
+            process.start()  # Start the process (call self._alpha_beta_process)
             if i != PROCESSES - 2:  # if it is not the end of the process
-                start, end = end, end + per_process
+                start, end = end, end + per_process  # Move on to the next indices
             else:  # until the last process
-                start, end = end, end + last_process
+                start, end = end, end + last_process  # Last indices (for the last process)
 
+        # Now the multiprocessing work is all done. Stop the processes in the list <processes>
         for p in processes:
             p.join()
 
+        # Since self._alpha_beta_process stores its work as xml files, convert them into trees
         for i in range(len(moves)):
             subtree = xml_to_tree(f'temp/process{i}.xml')  # store the temp tree
-            self._game_tree.add_subtree(subtree)
-            os.remove(f'temp/process{i}.xml')  # after adding the subtree, remove the temp tree
+            self._game_tree.add_subtree(subtree)  # add it as subtree of self._game_tree
+            os.remove(f'temp/process{i}.xml')  # after adding the subtree, remove the xml file
 
-        # similar to alpha-beta
+        # determine the root value of the tree, similar to alpha-beta
         if game.is_red_move():
             value = max(s.relative_points for s in self._game_tree.get_subtrees())
         else:
@@ -333,15 +344,26 @@ class ExploringPlayer(Player):
     def _alpha_beta_process(self, game: ChessGame, depth: int,
                             alpha: int, beta: int, start: int, end: int) -> None:
         """This helper method will be called PROCESSES number of times, performing
-        the alpha-beta pruning algorithm over multiple processes.
+        the alpha-beta pruning algorithm over multiple processes. After it is finished,
+        store its generated GameTree as xml file, since memory cannot be accessed between processes.
+
+        <start> and <end> represent the range of moves to be searched, where each process
+        is responsible of a certain range (analogous to 'splitting the work')
+
+        The below example illustrate our usage of multiprocessing functions (split the work):
+
+        possible_moves = [ move_1   move_2   move_3   move_4   ...   move_x-1   move_x ]
+                             |_________|       |_________|    |___|     |__________|
+                              process_1         process_2      ...    process_<PROCESSES>
 
         Preconditions:
             - must be called by _alpha_beta_multi
         """
+        # Method same as self._alpha_beta, see that method for annotations
         possible_moves = game.get_valid_moves()
         if game.is_red_move():
             value = -1000000
-            for i in range(start, end):
+            for i in range(start, end):  # Only search for moves in the given range
                 move = possible_moves[i]
                 subtree = GameTree(move, False)
                 game_after_move = game.copy_and_make_move(move)
@@ -349,13 +371,14 @@ class ExploringPlayer(Player):
                                                     alpha, beta))
                 alpha = max(alpha, value)
 
+                # Store the generated tree (since memory cannot be accessed between processes)
                 tree_to_xml(subtree, f'temp/process{i}.xml')
 
                 if alpha >= beta:
                     break  # beta cutoff
         else:
             value = 1000000
-            for i in range(start, end):
+            for i in range(start, end):  # Only search for moves in the given range
                 move = possible_moves[i]
                 subtree = GameTree(move, True)
                 game_after_move = game.copy_and_make_move(move)
@@ -363,6 +386,7 @@ class ExploringPlayer(Player):
                                                     alpha, beta))
                 beta = min(beta, value)
 
+                # Store the generated tree (since memory cannot be accessed between processes)
                 tree_to_xml(subtree, f'temp/process{i}.xml')
 
                 if beta <= alpha:
@@ -522,6 +546,29 @@ class AIBlack(Player):
     #
     # Private Representation Invariants:
     #   - self._current_tree is not None
+    #
+    # Explanations for how self._current_tree (denoted ct) and self._current_subtree (cs) work:
+    # ct's responsibility is to trace all the moves searched this round, which can then be
+    # merged with self._game_tree (via the self.store_tree method). To trace all move searched,
+    # we introduce cs at the beginning and make it equal to ct.
+    # For every subtree we get when searching for the next move, we add that subtree to cs, then
+    # assign cs to that subtree. Notice that this creates a 'tree-chain' that builds up ct.
+    #
+    # We will illustrate this concept with a picture (where a block represents a GameTree):
+    #
+    #       |-----------|                           |----------|
+    #       |  ct/cs    |    add subtree to cs      |  ct/cs   |        |-----------|
+    #       |___________|   -------------------->   |__________|        |    ct     |
+    #                                                    |              |___________|
+    #                                               |----------|             |
+    #       |-----------|    assign cs to subtree   | subtree  |        |-----------|
+    #       |    ct     |   <--------------------   |__________|        | subtree1  |
+    #       |___________|                                               |___________|
+    #             |                                                          |
+    #       |-----------|           repeat                              |-----------|
+    #       |subtree/cs |   ----------------------------------------->  |subtree2/cs|  repeat
+    #       |___________|                                               |___________|
+
     depth: int
     _current_tree: GameTree
     _current_subtree: GameTree
@@ -551,7 +598,7 @@ class AIBlack(Player):
             move = explorer.make_move(game, previous_move)
             new_subtree = explorer.get_tree()
             # add the new tree explored two self._current_subtree
-            self._current_subtree.add_subtree(new_subtree)
+            self._current_subtree.add_subtree(new_subtree)  # see illustration in docstring
             # update self._current_subtree to trace the previous move
             self._current_subtree = new_subtree.find_subtree_by_move(move)
             return move
@@ -578,7 +625,7 @@ class AIBlack(Player):
             self._game_tree = chosen_subtree  # We know that this is a subtree of self._game_tree
 
             # Add the subtree for the previous move to self._current_subtree (denoted scs)
-            self._current_subtree.add_subtree(new_subtree)
+            self._current_subtree.add_subtree(new_subtree)  # see illustration in docstring
             # Assign scs to new_subtree, which is a subtree of the original scs
             self._current_subtree = new_subtree
             # Add the subtree for the chosen move to scs
@@ -592,11 +639,11 @@ class AIBlack(Player):
         file containing the original tree with the new, bigger tree.
         """
         print('Reloading tree...')
-        self.reload_tree()
+        self.reload_tree()  # reset self._game_tree
         print('Merging trees...')
-        self._game_tree.merge_with(self._current_tree)
+        self._game_tree.merge_with(self._current_tree)  # merge
         print('Storing tree...')
-        tree_to_xml(self._game_tree, self.xml_file)
+        tree_to_xml(self._game_tree, self.xml_file)  # store the larger tree as xml
         print('Success.')
 
     def reload_tree(self) -> None:
@@ -604,7 +651,7 @@ class AIBlack(Player):
         try:
             self._game_tree = xml_to_tree(self.xml_file)
         except FileNotFoundError:
-            self._game_tree = None
+            self._game_tree = None  # then work the same as ExploringPlayer
 
 
 if __name__ == '__main__':

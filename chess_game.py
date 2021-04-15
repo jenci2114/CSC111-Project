@@ -219,7 +219,7 @@ class ChessGame:
             elif piece.kind == 'e':
                 moves += self._calculate_moves_for_elephant(board, pos)
             elif piece.kind == 'a':
-                moves += self._calculate_moves_for_assistant(board, pos)
+                moves += self._calculate_moves_for_advisor(board, pos)
             elif piece.kind == 'k':
                 moves += self._calculate_moves_for_king(board, pos)
             elif piece.kind == 'c':
@@ -302,14 +302,14 @@ class ChessGame:
 
         return moves
 
-    def _calculate_moves_for_assistant(self, board: list[list[Optional[_Piece]]],
-                                       pos: tuple[int, int]) -> list[str]:
-        """Return all possible moves for the assistant at the given position
+    def _calculate_moves_for_advisor(self, board: list[list[Optional[_Piece]]],
+                                     pos: tuple[int, int]) -> list[str]:
+        """Return all possible moves for the advisor at the given position
         on a given board with a given active player.
 
         Preconditions:
             - board must be in a legal state (e.g. cannot have three red cannons, etc.)
-            - an assistant is on the given position of the board
+            - an advisor is on the given position of the board
         """
         piece = board[pos[0]][pos[1]]
         moves = []  # accumulator
@@ -615,7 +615,7 @@ def _get_index_movement(board: list[list[Optional[_Piece]]],
             return (y + vert, value - 1)
         else:  # sign == '-'
             return (y - vert, value - 1)
-    else:  # piece.kind in {'e', 'a'}  elephant and assistant both move in perfect diagonal lines
+    else:  # piece.kind in {'e', 'a'}  elephant and advisor both move in perfect diagonal lines
         # Determine the vertical steps
         if piece.kind == 'e':
             vert = 2
@@ -1098,7 +1098,7 @@ def _absolute_advisor(board: list[list[Optional[_Piece]]], pos: tuple[int, int])
 
     points_so_far = side * 200
 
-    # Assistant off-guard penalty
+    # Advisor off-guard penalty
     if pos[0] == 7 and pos[1] in {3, 5} and side == 1:
         points_so_far -= 10
     elif pos[0] == 2 and pos[1] in {3, 5} and side == -1:
@@ -1129,7 +1129,7 @@ class _Piece:
             r = rook/chariot 车
             h = horse 马
             e = elephant 象
-            a = assistant 士
+            a = advisor 士
             k = king 将/帅
             c = cannon 炮
             p = pawn 卒/兵

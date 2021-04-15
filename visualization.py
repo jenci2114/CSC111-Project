@@ -62,14 +62,14 @@ class Game:
         # Load images
         board_image = pygame.image.load('chessboard/board/004.jpg')
         coord_image = pygame.image.load('chessboard/board/xy2.png')
-        black_assistant = pygame.image.load('chessboard/piece/ba.png')
+        black_advisor = pygame.image.load('chessboard/piece/ba.png')
         black_elephant = pygame.image.load('chessboard/piece/bb.png')
         black_cannon = pygame.image.load('chessboard/piece/bc.png')
         black_king = pygame.image.load('chessboard/piece/bk.png')
         black_horse = pygame.image.load('chessboard/piece/bn.png')
         black_pawn = pygame.image.load('chessboard/piece/bp.png')
         black_chariot = pygame.image.load('chessboard/piece/br.png')
-        red_assistant = pygame.image.load('chessboard/piece/ra.png')
+        red_advisor = pygame.image.load('chessboard/piece/ra.png')
         red_elephant = pygame.image.load('chessboard/piece/rb.png')
         red_cannon = pygame.image.load('chessboard/piece/rc.png')
         red_king = pygame.image.load('chessboard/piece/rk.png')
@@ -103,10 +103,10 @@ class Game:
 
         global IMAGE_DICT
         IMAGE_DICT = {('r', False): black_chariot, ('h', False): black_horse,
-                      ('e', False): black_elephant, ('a', False): black_assistant,
+                      ('e', False): black_elephant, ('a', False): black_advisor,
                       ('k', False): black_king, ('c', False): black_cannon,
                       ('p', False): black_pawn, ('r', True): red_chariot, ('h', True): red_horse,
-                      ('e', True): red_elephant, ('a', True): red_assistant, ('k', True): red_king,
+                      ('e', True): red_elephant, ('a', True): red_advisor, ('k', True): red_king,
                       ('c', True): red_cannon, ('p', True): red_pawn, 'board_image': board_image,
                       'coord_image': coord_image, 'possible_move_frame': possible_move_frame,
                       'selected_frame': selected_frame, 'check_sound': check_sound,
