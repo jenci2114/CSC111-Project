@@ -85,7 +85,7 @@ class Game:
         the name of the piece and the second element being the sides.
         The values of the dictionary are the corresponding images.
 
-        Note: this method is used when initializing the class.
+        Note: this method is called only when initializing the class, as a helper function.
         """
         # Load images
         board_image = pygame.image.load('chessboard/board/004.jpg')
@@ -125,7 +125,7 @@ class Game:
         move_sound: the sound for moving a piece, used for both sides
         capture_sound: the sound for capturing a piece, used for both sides
 
-        Note: this method is used when initializing the class.
+        Note: this method is called only when initializing the class, as a helper function.
         """
         # Load sound
         check_sound = pygame.mixer.Sound('chessboard/sound/check.wav')
@@ -139,7 +139,7 @@ class Game:
     def _define_color(self) -> dict:
         """Define colors that will be used in the game, and return a dictionary storing them.
 
-        Note: this method is used when initializing the class.
+        Note: this method is called only when initializing the class, as a helper function.
         """
         # Define RGB colours & display background
         black = (0, 0, 0)
@@ -157,7 +157,7 @@ class Game:
     def _define_font(self) -> dict:
         """Define the font for the game interaction surface, and return a dictionary storing them.
 
-        Note: this method is used when initializing the class.
+        Note: this method is called only when initializing the class, as a helper function.
         """
         # Load font
         font_bold = pygame.font.SysFont('American Typewriter', 36, bold=True)
@@ -180,47 +180,54 @@ class Game:
         pygame.display.set_icon(icon)
 
     def display_instructions(self) -> None:
-        """Display the instructions and the status bar on the right side of the board."""
+        """Display the instructions and the status bar on the right side of the board,
+        as the followings:
+
+        Instructions
+        During your turn, click
+        one of your pieces to get
+        all of its valid moves.
+        Then click on the desired
+        location to make move or
+        click anywhere else to
+        deselect the piece.
+
+            Your move
+            Opponent's move
+        """
         # Instructions display
-        instruction_1 = FONT_DICT['text'].render('Instructions', True, COLOR_DICT['black'])
-        instruction_1_rect = instruction_1.get_rect(topleft=(600, 50))
-        self._screen.blit(instruction_1, instruction_1_rect)
-        instruction_2 = FONT_DICT['text'].render('During your turn, click', True,
-                                                  COLOR_DICT['black'])
-        instruction_2_rect = instruction_2.get_rect(topleft=(600, 100))
-        self._screen.blit(instruction_2, instruction_2_rect)
-        instruction_3 = FONT_DICT['text'].render('one of your pieces to get', True,
-                                                  COLOR_DICT['black'])
-        instruction_3_rect = instruction_3.get_rect(topleft=(600, 140))
-        self._screen.blit(instruction_3, instruction_3_rect)
-        instruction_4 = FONT_DICT['text'].render('all of its valid moves.', True,
-                                                  COLOR_DICT['black'])
-        instruction_4_rect = instruction_4.get_rect(topleft=(600, 180))
-        self._screen.blit(instruction_4, instruction_4_rect)
-        instruction_5 = FONT_DICT['text'].render('Then click on the desired', True,
-                                                  COLOR_DICT['black'])
-        instruction_5_rect = instruction_5.get_rect(topleft=(600, 220))
-        self._screen.blit(instruction_5, instruction_5_rect)
-        instruction_6 = FONT_DICT['text'].render('location to make move or', True,
-                                                  COLOR_DICT['black'])
-        instruction_6_rect = instruction_6.get_rect(topleft=(600, 260))
-        self._screen.blit(instruction_6, instruction_6_rect)
-        instruction_7 = FONT_DICT['text'].render('click anywhere else to', True,
-                                                  COLOR_DICT['black'])
-        instruction_7_rect = instruction_7.get_rect(topleft=(600, 300))
-        self._screen.blit(instruction_7, instruction_7_rect)
-        instruction_8 = FONT_DICT['text'].render('deselect the piece.', True, COLOR_DICT['black'])
-        instruction_8_rect = instruction_8.get_rect(topleft=(600, 340))
-        self._screen.blit(instruction_8, instruction_8_rect)
+        self._instruction('Instructions', (600, 50))
+        self._instruction('During your turn, click', (600, 100))
+        self._instruction('one of your pieces to get', (600, 140))
+        self._instruction('all of its valid moves.', (600, 180))
+        self._instruction('Then click on the desired', (600, 220))
+        self._instruction('location to make move or', (600, 260))
+        self._instruction('click anywhere else to', (600, 300))
+        self._instruction('deselect the piece.', (600, 340))
 
         # Current status display
-        your_move = FONT_DICT['font'].render('Your move', True, COLOR_DICT['red'])
-        your_move_rect = your_move.get_rect(topleft=(650, 450))
-        self._screen.blit(your_move, your_move_rect)
+        self._status('Your move', (650, 450))
+        self._status("Opponent's move", (650, 500))
 
-        opponent_move = FONT_DICT['font'].render("Opponent's move", True, COLOR_DICT['red'])
-        opponent_move_rect = opponent_move.get_rect(topleft=(650, 500))
-        self._screen.blit(opponent_move, opponent_move_rect)
+    def _instruction(self, text: str, position: tuple) -> None:
+        """Display the instruction text on the position.
+        The color is 'black' and the font is 'text', which are defined in the FONT_DICT.
+
+        Note: This is a helper function for self.display_instructions
+        """
+        output_text = FONT_DICT['text'].render(text, True, COLOR_DICT['black'])
+        rect = output_text.get_rect(topleft=position)
+        self._screen.blit(output_text, rect)
+
+    def _status(self, text: str, position: tuple) -> None:
+        """Display the current status text on the position.
+        The color is 'red' and the font is 'font', which are defined in the FONT_DICT.
+
+        Note: This is a helper function for self.display_instructions
+        """
+        output_text = FONT_DICT['font'].render(text, True, COLOR_DICT['red'])
+        rect = output_text.get_rect(topleft=position)
+        self._screen.blit(output_text, rect)
 
     def run(self) -> None:
         """Run the game."""
