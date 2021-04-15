@@ -1149,7 +1149,7 @@ class _Piece:
     def __eq__(self, other: Optional[_Piece]) -> bool:
         if other is None:
             return False
-        return self.kind == other.kind and self.is_red == other.is_red
+        return self.kind == other.kind and self.is_red == other.is_red  # Same kind, same colour
 
 
 if __name__ == '__main__':

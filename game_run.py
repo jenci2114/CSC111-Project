@@ -56,9 +56,9 @@ def run_game(red: player.Player, black: player.Player, visualize: bool = False) 
     current_player = red  # The red flag always goes first(It is part of rules of Chinese chess)
     while game.get_winner() is None:  # When id game is not finished, literates the while loop
 
-        # After the current_player make the move, store it as the previous move and switch the player
+        # After the current_player make the move, store it as the previous move
         previous_move = current_player.make_move(game, previous_move)
-        # Base one the previous move, the new current player does the same thing as the old current player does above
+        # Change the game state
         game.make_move(previous_move)
         # Store each move in the game
         move_sequence.append(previous_move)
