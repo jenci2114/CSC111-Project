@@ -5,6 +5,10 @@ Module Description
 
 This Python module contains functions to run games for AI training purposes.
 
+Both functions in this module are adapted (with changes) from the
+a2_minichess.py module from the Assignment 2 starter files.
+Link: https://www.teach.cs.toronto.edu/~csc111h/winter/assignments/a2/handout/
+
 Copyright and Usage Information
 ===============================
 

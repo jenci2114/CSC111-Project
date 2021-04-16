@@ -9,6 +9,16 @@ contains functions that convert between the aforementioned
 GameTree class and xml files, where xml files are used to store
 preexisting GameTrees.
 
+The following methods/classes are adapted (with changes) from the
+a2_game_tree.py module from the Assignment 2 starter files:
+    - GameTree.__init__
+    - GameTree.get_subtrees
+    - GameTree.find_subtree_by_move
+    - GameTree.add_subtree
+    - GameTree.__str__
+    - GameTree._str_indented
+Link: https://www.teach.cs.toronto.edu/~csc111h/winter/assignments/a2/handout/
+
 Copyright and Usage Information
 ===============================
 

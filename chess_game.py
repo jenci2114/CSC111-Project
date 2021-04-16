@@ -9,6 +9,21 @@ represents Chinese Chess pieces. Also, this module
 contains methods necessary for converting between coordinate
 notation and wxf (i.e. World Xiangqi Foundation) notations.
 
+The following methods/classes are adapted (with changes) from the
+a2_minichess.py module from the Assignment 2 starter files:
+    - ChessGame.__init__
+    - ChessGame.get_valid_moves
+    - ChessGame.make_move
+    - ChessGame.copy_and_make_move
+    - ChessGame.is_red_move
+    - ChessGame.get_winner
+    - ChessGame._calculate_moves_for_board
+    - ChessGame._find_moves_in_direction
+    - ChessGame._board_after_move
+    - ChessGame._recalculate_valid_moves
+    - _Piece class
+Link: https://www.teach.cs.toronto.edu/~csc111h/winter/assignments/a2/handout/
+
 Copyright and Usage Information
 ===============================
 
