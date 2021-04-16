@@ -184,7 +184,7 @@ class Game:
         as the followings:
 
         Instructions
-        You are the red side. 
+        You are the red side.
         During your turn, click
         one of your pieces to get
         all of its valid moves.
@@ -446,10 +446,7 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     return y // 56, x // 56
 
 
-if __name__ == '__main__':
-    from player import ExploringPlayer, AIBlack
-    g = Game(ExploringPlayer(3), True, True)
-    g.run()
+# if __name__ == '__main__':
     # import python_ta.contracts
     # python_ta.contracts.check_all_contracts()
     #

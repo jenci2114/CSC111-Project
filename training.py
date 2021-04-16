@@ -129,11 +129,11 @@ def train_black_ai(file: str, depth: int, iterations: int) -> None:
         - depth > 0
         - iterations > 0
     """
-    for _ in range(iterations):
-        ai_player = AIBlack(file, depth)
-        exploring_player = ExploringPlayer(4)
-        game_run.run_games(1, exploring_player, ai_player, True)
-        ai_player.store_tree()
+    for _ in range(iterations):  # How many times to train
+        ai_player = AIBlack(file, depth)  # Initialize AIBlack class with given file/depth
+        exploring_player = ExploringPlayer(4)  # Match AIBlack against depth-4 EP
+        game_run.run_games(1, exploring_player, ai_player, True)  # Play 1 round
+        ai_player.store_tree()  # Store the results
 
 
 if __name__ == '__main__':
