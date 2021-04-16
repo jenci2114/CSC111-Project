@@ -159,7 +159,7 @@ class ExploringPlayer(Player):
         To understand what is an alpha-beta algorithm, we first need to know what is a Minimax
         algorithm. In this algorithm, we have two players, which are Maximizer and Minimizer.
         Maximizer tries to get the highest score while Minimizer tries to get the lowest score.
-        In our game tree, we we have to go all the way through the leaves to reach the terminal
+        In our game tree, we have to go all the way through the subtrees to reach the terminal
         nodes. At the terminal node, we calculate the terminal values by the function "calculate_
         absolute_points". we will compare those value and backtrack the tree until the initial
         state occurs. We will illustrate this concept with the below example (the tree drawing):
