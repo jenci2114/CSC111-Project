@@ -24,10 +24,10 @@ def present() -> None:
     print('You will play as the \033[91mred player\33[0m. '
           'Good luck and hopefully you can beat our AI!')
     print('Please indicate which AI you would like to fight against:')
-    print("Enter '1' for a beginner-level AI")
-    print("'2' for an intermediate-level AI")
-    print("'3' for a trained intermediate-level AI")
-    print("'4' for an advanced-level AI (Warning: each step takes 30-600 seconds)")
+    print("Enter '1' for a beginner-level AI")  # ExploringPlayer Depth 2
+    print("'2' for an intermediate-level AI")  # Exploring Player Depth 3
+    print("'3' for a trained intermediate-level AI")  # AIBlack with tree.xml file, depth 3
+    print("'4' for an advanced-level AI (Warning: each step takes 30-600 seconds)")  # EP Depth 4
     option = input()
 
     while option not in {'1', '2', '3', '4'}:
