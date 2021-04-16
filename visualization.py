@@ -292,7 +292,7 @@ class Game:
                         if self._check_for_end():  # check whether the game is ended
                             continue
 
-    def _make_a_move(self, wxf_move: str, old_status_rect: tuple, new_status_rect,
+    def _make_a_move(self, wxf_move: str, old_status_rect: tuple, new_status_rect: tuple,
                      is_red: bool) -> None:
         """Make a move on the pygame board based on wxf_move.
 
@@ -453,6 +453,6 @@ def pixel_to_coordinate(pixel: tuple[int, int]) -> tuple[int, int]:
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
-    #     'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R1702', 'R0915'],
+    #     'disable': ['E1101', 'E1136', 'E9997', 'E9998', 'R0902', 'R0201', 'R0914', 'R1702'],
     #     'extra-imports': ['chess_game', 'player', 'pygame']
     # })

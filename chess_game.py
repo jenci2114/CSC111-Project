@@ -353,22 +353,20 @@ class ChessGame:
         if piece.is_red:
             king_row = pos[0] - 1
             while king_row >= 0:  # Search 'upwards' (index going down)
-                if board[king_row][pos[1]] is not None:
-                    if board[king_row][pos[1]].kind == 'k':  # Can confront other king
-                        moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]),
-                                                       piece.is_red))
-                    else:
-                        break
+                if board[king_row][pos[1]] is not None and \
+                        board[king_row][pos[1]].kind == 'k':  # Can confront other king
+                    moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]), piece.is_red))
+                elif board[king_row][pos[1]] is not None:  # Not confronting other king
+                    break
                 king_row -= 1  # Search the place right above in the next iteration
         else:  # not is_red
             king_row = pos[0] + 1
             while king_row <= 9:  # Search 'downwards' (index going up)
-                if board[king_row][pos[1]] is not None:
-                    if board[king_row][pos[1]].kind == 'k':  # Can confront other king
-                        moves.append(
-                            _get_wxf_movement(board, pos, (king_row, pos[1]), piece.is_red))
-                    else:
-                        break
+                if board[king_row][pos[1]] is not None and \
+                        board[king_row][pos[1]].kind == 'k':  # Can confront other king
+                    moves.append(_get_wxf_movement(board, pos, (king_row, pos[1]), piece.is_red))
+                elif board[king_row][pos[1]] is not None:
+                    break
                 king_row += 1  # Search the place right below in the next iteration
 
         return moves
@@ -456,18 +454,7 @@ class ChessGame:
             if contents is not None:  # the spot being searched contains another piece
                 stop = True  # Can't move any further; this is the last iteration of the whlie loop
                 if kind == 'c':  # Check if this cannon can be fired in the given direction
-                    i += 1
-                    y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
-                    while 0 <= x <= 8 and 0 <= y <= 9:  # only check non-out-of-bound locations
-                        if board[y][x] is not None and board[y][x].is_red == is_red:
-                            # Cannot fire cannon since it's blocked by an ally piece
-                            break
-                        if board[y][x] is not None and board[y][x].is_red != is_red:
-                            # Can fire cannon because found an opponent piece
-                            moves.append(_get_wxf_movement(board, pos, (y, x), is_red))
-                            break
-                        i += 1
-                        y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
+                    moves += self._check_cannon_fire(board, pos, is_red, direction, i)
 
                 # If this piece is allowed to capture, then add the move to the accumulator
                 if contents.is_red != is_red and capture is not False:
@@ -482,6 +469,29 @@ class ChessGame:
                 stop = True
 
         return moves
+
+    def _check_cannon_fire(self, board: list[list[Optional[_Piece]]], pos: tuple[int, int],
+                           is_red: bool, direction: tuple[int, int], i: int) -> list:
+        """Helper function of the above function that checks whether a cannon can be fired
+        in the given direction.
+
+        Preconditions:
+            - There must be a cannon at the given pos of the board
+            - Cannon's colour must be consistent with is_red
+        """
+        i += 1
+        y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
+        while 0 <= x <= 8 and 0 <= y <= 9:  # only check non-out-of-bound locations
+            if board[y][x] is not None and board[y][x].is_red == is_red:
+                # Cannot fire cannon since it's blocked by an ally piece
+                return []
+            if board[y][x] is not None and board[y][x].is_red != is_red:
+                # Can fire cannon because found an opponent piece
+                return [_get_wxf_movement(board, pos, (y, x), is_red)]
+            i += 1
+            y, x = pos[0] + direction[0] * i, pos[1] + direction[1] * i
+
+        return []  # Cannot fire cannon because nothing can be hit
 
     def get_board(self) -> list[list[Optional[_Piece]]]:
         """Return the board representation."""
@@ -595,9 +605,9 @@ def _get_index_movement(board: list[list[Optional[_Piece]]],
     value = int(move[3])
     piece = board[y][x]
     if sign == '.' and is_red:
-        return (y, 9 - value)  # change the x coordinate of the piece when the piece is red and return
+        return (y, 9 - value)  # convert the x coordinate of the piece when the piece is red
     elif sign == '.' and not is_red:
-        return (y, value - 1)  # change the x coordinate of the piece when the piecblack red and return
+        return (y, value - 1)  # convert the x coordinate of the piece when the piece is black red
     elif piece.kind in {'r', 'k', 'c', 'p'}:  # they all move vert, change the y coords
         if is_red and sign == '+' or not is_red and sign == '-':
             return (y - value, x)
@@ -1158,11 +1168,10 @@ if __name__ == '__main__':
 
     # import python_ta
     # python_ta.check_all(config={
-    #     'max-line-length': 150,
-    #     # Some code here is copied from the Assignment 2 package, and we disabled all the
-    #     # errors present on the provided Assignment 2 package.
-    #     'disable': ['E9989', 'E1136', 'E9998', 'W1401', 'R1702',
-    #                 'R0912', 'R0913', 'R0914', 'R0915', 'R0201'],
+    #     'max-line-length': 100,
+    #     # Note: we ran PyTA against the starter file a2_minichess.py given in Assignment 2,
+    #     # and disabled the ones that file did not pass either.
+    #     'disable': ['E1136', 'E9989', 'E9998', 'W1401', 'R0201', 'R1702', 'R0912', 'R0913'],
     #     'extra-imports': ['typing', 'statistics', 'copy']
     # })
 

@@ -364,12 +364,14 @@ class GameTree:
                 subtree.reevaluate()  # Recurse and re-evaluate the subtrees
 
                 # At this point, all subtrees of the loop variable subtree is reevaluated.
-                if subtree._subtrees != []:  # not a leaf, then we calculate based on its subtrees
+                if subtree._subtrees != [] and subtree.is_red_move:
+                    # not a leaf, then we calculate based on its subtrees
                     subtree._update_win_probabilities()
-                    if subtree.is_red_move:
-                        subtree.relative_points = max(s.relative_points for s in subtree._subtrees)
-                    else:
-                        subtree.relative_points = min(s.relative_points for s in subtree._subtrees)
+                    subtree.relative_points = max(s.relative_points for s in subtree._subtrees)
+                elif subtree._subtrees != [] and not subtree.is_red_move:
+                    # not a leaf, then we calculate based on its subtrees
+                    subtree._update_win_probabilities()
+                    subtree.relative_points = min(s.relative_points for s in subtree._subtrees)
 
     def merge_with(self, other_tree: GameTree) -> None:
         """Recursively merge the current tree with other_tree. Note that this is a
@@ -584,6 +586,6 @@ if __name__ == '__main__':
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
-    #     'disable': ['E1136', 'E9998', 'R0913', 'R1702'],
+    #     'disable': ['E1136', 'E9998', 'R0913'],
     #     'extra-imports': ['csv', 'xml.etree.cElementTree', 'math', 'chess_game']
     # })

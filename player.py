@@ -664,6 +664,6 @@ if __name__ == '__main__':
     # import python_ta
     # python_ta.check_all(config={
     #     'max-line-length': 100,
-    #     'disable': ['E1136', 'E9994', 'E9998', 'R0913', 'R0914'],
+    #     'disable': ['E1136', 'E9989', 'E9994', 'E9998', 'W1401', 'R0913', 'R0914'],
     #     'extra-imports': ['chess_game', 'game_tree', 'game_run', 'multiprocessing', 'random', 'os']
     # })
