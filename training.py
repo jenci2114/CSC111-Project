@@ -131,12 +131,14 @@ def train_black_ai(file: str, depth: int, iterations: int) -> None:
     """
     for _ in range(iterations):  # How many times to train
         ai_player = AIBlack(file, depth)  # Initialize AIBlack class with given file/depth
-        exploring_player = ExploringPlayer(4)  # Match AIBlack against depth-4 EP
+        exploring_player = ExploringPlayer(3)  # Match AIBlack against depth-3 EP
         game_run.run_games(1, exploring_player, ai_player, True)  # Play 1 round
         ai_player.store_tree()  # Store the results
 
 
 if __name__ == '__main__':
+    # |------| For Training LearningPlayer |-----|
+
     # We will get two files. The smaller one ('data/tree_for_prob.xml') has good
     # win probability estimation and the larger one ('data/tree_for_points.xml') has
     # lots of nodes with relative points
@@ -161,6 +163,18 @@ if __name__ == '__main__':
     # choose number of trainings, depth for LearningPlayer and
     # the depth (turns) of the generated tree
     # train_exploring_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
+
+    # |-------------------------------------------|
+
+    # |------| For Training AIBlack |-------------|
+    # You can train the given tree.xml and enlarge the tree stored there:
+    # Uncommented the below line:
+    # train_black_ai('tree.xml', 3, 1)
+
+    # Before you do so, make sure you change _MAX_MOVES to 10 so that it does not run long
+    # After training, please change _MAX_MOVES back to 200.
+
+    # |-------------------------------------------|
 
     import python_ta.contracts
     python_ta.contracts.check_all_contracts()
