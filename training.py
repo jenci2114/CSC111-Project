@@ -149,14 +149,10 @@ if __name__ == '__main__':
     # win probability estimation and the larger one ('data/tree_for_points.xml') has
     # lots of nodes with relative points
 
-    # |------| Preparing trees |-------------|
-    # If this is your firs time run this file, uncomment line 145 to 150
+    # |------| Prepare initial tree files |-------------|
+    # If this is your firs time run this file, uncomment line 153 to 158
     # training_tree = game_tree.load_game_tree('data/middle_sample.csv')
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_prob.xml')
-
-    # |--------------------------------------|
-
-    # |------| For Training Win Probability for Tree |--------|
     # training_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # training_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_points.xml')
