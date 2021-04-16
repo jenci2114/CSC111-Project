@@ -184,6 +184,7 @@ class Game:
         as the followings:
 
         Instructions
+        You are the red side. 
         During your turn, click
         one of your pieces to get
         all of its valid moves.
@@ -197,13 +198,14 @@ class Game:
         """
         # Instructions display
         self._instruction('Instructions', (600, 50))
-        self._instruction('During your turn, click', (600, 100))
-        self._instruction('one of your pieces to get', (600, 140))
-        self._instruction('all of its valid moves.', (600, 180))
-        self._instruction('Then click on the desired', (600, 220))
-        self._instruction('location to make move or', (600, 260))
-        self._instruction('click anywhere else to', (600, 300))
-        self._instruction('deselect the piece.', (600, 340))
+        self._instruction('You are the red side', (600, 86))
+        self._instruction('During your turn, click', (600, 122))
+        self._instruction('one of your pieces to get', (600, 158))
+        self._instruction('all of its valid moves.', (600, 194))
+        self._instruction('Then click on the desired', (600, 230))
+        self._instruction('location to make move or', (600, 266))
+        self._instruction('click anywhere else to', (600, 302))
+        self._instruction('deselect the piece.', (600, 338))
 
         # Current status display
         self._status('Your move', (650, 450))
