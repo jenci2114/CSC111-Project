@@ -150,10 +150,11 @@ if __name__ == '__main__':
     # lots of nodes with relative points
 
     # |------| Prepare initial tree files |-------------|
-    # If this is your firs time run this file, uncomment line 153 to 158
+    # Note: We use middle_sample.csv here, instead of moves.csv, so that
+    # TA can test it with short running time
+    # If this is your firs time run this file, uncomment line 156 to 159
     # training_tree = game_tree.load_game_tree('data/middle_sample.csv')
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_prob.xml')
-    # training_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # training_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_points.xml')
 
