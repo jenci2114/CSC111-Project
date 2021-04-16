@@ -36,21 +36,23 @@ def train_exploring_for_probability(tree_file: str, number: int, depth: int) -> 
     """
     tree = game_tree.xml_to_tree(tree_file)
     for i in range(number):
-        print(i + 1)  # to trace how many times it has trained
-        game = ChessGame()
-        red = LearningPlayer(depth, tree_file)
-        black = LearningPlayer(depth, tree_file)
-        current_player = red
+        print(f'This is {i + 1} simulation')  # to trace how many times it has trained
+        game = ChessGame()  # initialize a new chess game
+        red = LearningPlayer(depth, tree_file)  # set red as Learning Player
+        black = LearningPlayer(depth, tree_file)  # set black as Learning Player
+        current_player = red  # red will make the first move
 
-        moves_so_far = []
-        points_so_far = []
-        previous_move = None
+        moves_so_far = []  # to store all the moves made
+        points_so_far = []  # to store the points corresponding to moves in moves_so_far
+        previous_move = None  # There is no previous move
 
         # simulate a game
         while game.get_winner() is None:
+            # the game is not ended
+            # update the tree of player and get the move it makes
             previous_move = current_player.make_move(game, previous_move)
-            game.make_move(previous_move)
-            board = game.get_board()
+            game.make_move(previous_move)  # update the game
+            board = game.get_board()  # get board to calculate the point
             moves_so_far.append(previous_move)
             points_so_far.append(chess_game.calculate_absolute_points(board))
 
@@ -60,8 +62,10 @@ def train_exploring_for_probability(tree_file: str, number: int, depth: int) -> 
                 current_player = red
 
         if current_player == red:  # Black wins
+            # insert the moves to the tree
             tree.insert_move_sequence(moves_so_far, points_so_far, black_win_probability=1.0)
         else:  # Red wins
+            # insert the moves to the tree
             tree.insert_move_sequence(moves_so_far, points_so_far, red_win_probability=1.0)
 
     game_tree.tree_to_xml(tree, tree_file)
@@ -92,17 +96,18 @@ def train_exploring_for_points(xml_file: str, number: int, depth: int, turns: in
         print(f'This is {i + 1} simulation')  # to trace how many times it has trained
 
         # simulate a game
-        game = ChessGame()
-        red = LearningPlayer(depth, xml_file)
-        black = LearningPlayer(depth, xml_file)
-        current_player = red
-        previous_move = None
-        curr_turn = 1
-        current_tree = red.get_tree()
+        game = ChessGame()  # initialize a new chess game
+        red = LearningPlayer(depth, xml_file)  # set red as Learning Player
+        black = LearningPlayer(depth, xml_file)  # set black as Learning Player
+        current_player = red  # red will make the first move
+        previous_move = None  # There is no previous move
+        curr_turn = 1  # then comes the first turn
+        current_tree = red.get_tree()  # to store the game tree
 
         while game.get_winner() is None and curr_turn <= turns:
+            # update the tree of player and get the move it makes
             previous_move = current_player.make_move(game, previous_move)
-            game.make_move(previous_move)
+            game.make_move(previous_move)  # update the game
 
             # update current_player for the next turn
             if current_player is red:
@@ -112,6 +117,7 @@ def train_exploring_for_points(xml_file: str, number: int, depth: int, turns: in
             curr_turn += 1
             print(game)
 
+        # Add the tree of this game to the tree
         tree.merge_with(current_tree)
 
     game_tree.tree_to_xml(tree, xml_file)
