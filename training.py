@@ -137,36 +137,44 @@ def train_black_ai(file: str, depth: int, iterations: int) -> None:
 
 
 if __name__ == '__main__':
-    # |------| For Training LearningPlayer |-----|
+    # |------------------| For Training LearningPlayer |-----------------|
 
     # We will get two files. The smaller one ('data/tree_for_prob.xml') has good
     # win probability estimation and the larger one ('data/tree_for_points.xml') has
     # lots of nodes with relative points
 
+    # |------| Preparing trees |-------------|
     # If this is your firs time run this file, uncomment line 145 to 150
-    # training_tree = game_tree.load_game_tree('data/moves.csv')
+    # training_tree = game_tree.load_game_tree('data/middle_sample.csv')
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_prob.xml')
 
+    # |--------------------------------------|
+
+    # |------| For Training Win Probability for Tree |--------|
     # training_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # training_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(training_tree, 'data/tree_for_points.xml')
 
+    # |-------------------------------------------------------|
+
     # You need to choose and set player.EPSILON and game_tree.ESTIMATION
 
-    # Firstly, run the following block of code
+    # |------| For Training Win Probability for Tree |--------|
     # train_exploring_for_probability('data/tree_for_prob.xml', number=2000, depth=3)
     # prob_tree = game_tree.xml_to_tree('data/tree_for_prob.xml')
     # prob_tree.clean_depth_subtrees(20)
     # game_tree.tree_to_xml(prob_tree, 'data/tree_for_prob.xml')
 
-    # Then, run the following block of code
+    # |-------------------------------------------------------|
+
+    # |------| For Training Points for Tree |-------|
     # choose number of trainings, depth for LearningPlayer and
     # the depth (turns) of the generated tree
     # train_exploring_for_points('data/tree_for_points.xml', number=1, depth=2, turns=15)
 
-    # |-------------------------------------------|
+    # |---------------------------------------------|
 
-    # |------| For Training AIBlack |-------------|
+    # |------| For Training AIBlack |-----------------------------------|
     # You can train the given tree.xml and enlarge the tree stored there:
     # Uncommented the below line:
     # train_black_ai('tree.xml', 3, 1)
@@ -174,7 +182,7 @@ if __name__ == '__main__':
     # Before you do so, make sure you change _MAX_MOVES to 10 so that it does not run long
     # After training, please change _MAX_MOVES back to 200.
 
-    # |-------------------------------------------|
+    # |-----------------------------------------------------------------|
 
     import python_ta.contracts
     python_ta.contracts.check_all_contracts()
